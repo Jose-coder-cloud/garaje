@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Garaje">
+<meta name="theme-color" content="#1f252a">
+<title>Garaje</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+
+/* Idea: la app es una carretera de noche. Asfalto oscuro como ventana de cada coche,
+   línea amarilla de señalización como único gesto atrevido, azul autopista para los botones. */
+:root{
+  --bg:#e8ebee; --card:#ffffff; --ink:#14181c; --ink2:#566069; --line:#d3d9de;
+  --blue:#0b4f9c; --yellow:#f7c600; --asphalt:#1f252a;
+  --red:#d02a1e; --amber:#e27d00; --green:#13885a; --grey:#7d8993;
+  --t-mant:#3b78d8; --t-rep:#c2662d; --t-neum:#6b7782; --t-itv:#1c9a97; --t-seg:#7c5cc4; --t-imp:#7e9a2b; --t-otros:#b1a39d;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12161a; --card:#1c2227; --ink:#eef1f3; --ink2:#9ba6af; --line:#2d353c;
+    --blue:#2f78dc; --asphalt:#0d1114;
+    --red:#ff5a4d; --amber:#ffa033; --green:#35c58a; --grey:#8f9aa4;
+    --t-mant:#5b93f0; --t-rep:#e08748; --t-neum:#8d99a4; --t-itv:#3fc0bc; --t-seg:#9c80e0; --t-imp:#a1bf4a; --t-otros:#c9bcb6;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12161a; --card:#1c2227; --ink:#eef1f3; --ink2:#9ba6af; --line:#2d353c;
+  --blue:#2f78dc; --asphalt:#0d1114;
+  --red:#ff5a4d; --amber:#ffa033; --green:#35c58a; --grey:#8f9aa4;
+  --t-mant:#5b93f0; --t-rep:#e08748; --t-neum:#8d99a4; --t-itv:#3fc0bc; --t-seg:#9c80e0; --t-imp:#a1bf4a; --t-otros:#c9bcb6;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.4;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+h1,h2,h3,p{margin:0;text-wrap:balance}
+#app{max-width:480px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 28px)}
+#app.has-bar{padding-bottom:calc(env(safe-area-inset-bottom) + 118px)}
+.num{font-variant-numeric:tabular-nums}
+
+/* Cabecera */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px}
+.iconbtn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:1px solid var(--line);color:var(--ink)}
+.iconbtn svg{width:22px;height:22px}
+.backbtn{display:flex;align-items:center;gap:2px;height:44px;padding:0 14px 0 8px;border-radius:22px;background:var(--card);border:1px solid var(--line);font-weight:600}
+.backbtn svg{width:22px;height:22px}
+svg.ic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* Inicio */
+.brand{font-family:var(--display);font-weight:800;font-size:56px;line-height:.95;letter-spacing:.01em;text-transform:uppercase}
+.datebar{color:var(--ink2);font-size:15px;margin-top:2px}
+.summary{font-family:var(--display);font-weight:600;font-size:27px;line-height:1.15;margin-top:14px}
+.summary b{font-weight:800;padding:0 .12em;border-radius:6px;color:#fff}
+.summary b.r{background:var(--red)} .summary b.a{background:var(--amber);color:#1a1200}
+.road{height:6px;margin:22px 0 18px;background:repeating-linear-gradient(90deg,var(--yellow) 0 22px,transparent 22px 40px);opacity:.95;border-radius:3px}
+.sec{font-family:var(--display);font-weight:700;font-size:24px;text-transform:uppercase;letter-spacing:.04em;margin:0 0 10px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cc{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;text-align:left;position:relative}
+.cc .win{background:var(--asphalt);height:96px;display:grid;place-items:center;position:relative}
+.cc .win>svg{width:86%;height:auto}
+.cc .info{padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px}
+.cc .nm{font-family:var(--display);font-weight:700;font-size:23px;line-height:1.05}
+.cc .pl{font-size:13px;color:var(--ink2);letter-spacing:.06em}
+.badge{position:absolute;top:8px;right:8px;min-width:30px;height:30px;padding:0 8px;border-radius:15px;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:19px;color:#fff;box-shadow:0 0 0 3px var(--asphalt)}
+.badge.red{background:var(--red)} .badge.amber{background:var(--amber);color:#1a1200} .badge.green{background:var(--green)}
+.badge svg{width:18px;height:18px;stroke-width:3}
+.cc.add{border:2px dashed var(--line);background:transparent;align-items:center;justify-content:center;min-height:172px;gap:6px;color:var(--ink2)}
+.cc.add svg{width:34px;height:34px}
+.cc.add span{font-weight:600}
+
+.list{display:flex;flex-direction:column;gap:8px}
+.row{display:grid;grid-template-columns:5px 1fr auto;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 14px 11px 0;text-align:left;width:100%;overflow:hidden}
+.row .bar{align-self:stretch;background:var(--grey)}
+.row.pasado .bar{background:var(--red)} .row.pronto .bar{background:var(--amber)} .row.ok .bar{background:var(--green)}
+.row .who{font-size:13px;color:var(--ink2);letter-spacing:.04em;text-transform:uppercase;font-weight:600}
+.row .what{font-weight:600}
+.row .when{font-size:14px;color:var(--ink2);text-align:right;max-width:120px}
+.empty{padding:22px 16px;text-align:center;color:var(--ink2);border:1px dashed var(--line);border-radius:14px}
+
+/* Coche */
+.stage{position:relative;margin-top:12px;background:var(--asphalt);border-radius:22px;height:206px;display:grid;place-items:center;overflow:hidden;touch-action:pan-y}
+.stage::after{content:"";position:absolute;left:0;right:0;bottom:22px;height:4px;background:repeating-linear-gradient(90deg,var(--yellow) 0 26px,transparent 26px 52px);opacity:.75}
+.stage svg.car{width:88%;max-width:380px;height:auto;position:relative;z-index:1;margin-bottom:14px}
+.stage .nav{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:56px;display:grid;place-items:center;color:#cfd6dc;z-index:2}
+.stage .nav svg{width:24px;height:24px}
+.stage .nav.l{left:2px} .stage .nav.r{right:2px;transform:translateY(-50%) scaleX(-1)}
+.dots{position:absolute;left:0;right:0;bottom:6px;display:flex;justify-content:center;gap:7px;z-index:2}
+.dots i{width:7px;height:7px;border-radius:50%;background:#6a757e}
+.dots i.on{background:var(--yellow)}
+.slide-l{animation:sl .28s ease-out} .slide-r{animation:sr .28s ease-out}
+@keyframes sl{from{transform:translateX(40px);opacity:.3}to{transform:none;opacity:1}}
+@keyframes sr{from{transform:translateX(-40px);opacity:.3}to{transform:none;opacity:1}}
+.ident{margin-top:14px}
+.ident h1{font-family:var(--display);font-weight:800;font-size:42px;line-height:1;text-transform:uppercase;letter-spacing:.01em}
+.ident .sub{color:var(--ink2);font-size:15px;margin-top:2px}
+.tags{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.plate{display:inline-flex;align-items:stretch;border:2px solid #101214;border-radius:6px;overflow:hidden;background:#fff;color:#101214;height:38px}
+.plate .eu{width:20px;background:#1d4fa6;color:#fff;display:grid;place-items:end center;font-weight:700;font-size:10px;padding-bottom:3px}
+.plate .nr{padding:0 10px;display:grid;place-items:center;font-family:"Barlow Semi Condensed",var(--display);font-weight:700;font-size:24px;letter-spacing:.12em}
+.dgt{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:20px;color:#fff;border:2px solid rgba(0,0,0,.25)}
+.dgt.d0{background:#1561c4} .dgt.dECO{background:linear-gradient(#2e9e4f 50%,#1561c4 50%);font-size:13px;letter-spacing:.02em}
+.dgt.dC{background:#2e9e4f} .dgt.dB{background:#f2c500;color:#231c00}
+.dgt.dA{background:#8a949c}
+.dgtname{font-size:14px;color:var(--ink2)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;border-top:5px solid var(--grey)}
+.stat.r{border-top-color:var(--red)} .stat.a{border-top-color:var(--amber)} .stat.g{border-top-color:var(--green)}
+.stat b{display:block;font-family:var(--display);font-weight:800;font-size:36px;line-height:1}
+.stat span{font-size:14px;color:var(--ink2);font-weight:600}
+.pane{margin-top:18px;display:flex;flex-direction:column;gap:12px}
+
+.odo{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--asphalt);color:#fff;border-radius:18px;padding:14px 16px;width:100%;text-align:left}
+.odo .lab{font-size:13px;color:#aab4bc;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.digits{display:flex;gap:3px;margin-top:6px}
+.digits i{font-style:normal;font-family:var(--display);font-weight:700;font-size:32px;line-height:1;background:#0a0d0f;border:1px solid #333c43;border-radius:5px;padding:5px 6px;color:#fff;min-width:26px;text-align:center}
+.digits .sep{background:none;border:0;min-width:6px;padding:5px 0}
+.odo .hint{font-size:13px;color:#aab4bc;max-width:110px;text-align:right}
+.call{text-decoration:none;display:flex;align-items:center;gap:12px;background:var(--blue);color:#fff;border-radius:18px;padding:16px;font-weight:600;width:100%;text-align:left}
+.call svg{width:28px;height:28px;flex:none}
+.call b{display:block;font-family:var(--display);font-size:23px;line-height:1.1;font-weight:700}
+.call small{font-size:15px;opacity:.9}
+.vcard{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--grey);border-radius:14px;padding:12px 14px;text-align:left;width:100%;display:block}
+.vcard.pasado{border-left-color:var(--red)} .vcard.pronto{border-left-color:var(--amber)} .vcard.ok{border-left-color:var(--green)}
+.vhead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.vt{font-family:var(--display);font-size:23px;font-weight:700;line-height:1.1}
+.chip{font-size:13px;font-weight:700;padding:3px 10px;border-radius:12px;white-space:nowrap;background:var(--grey);color:#fff}
+.chip.pasado{background:var(--red);color:#fff} .chip.pronto{background:var(--amber);color:#1a1200} .chip.ok{background:var(--green);color:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .chip.pasado,:root:not([data-theme="light"]) .chip.ok{color:#08110d}}
+:root[data-theme="dark"] .chip.pasado,:root[data-theme="dark"] .chip.ok{color:#08110d}
+.vp{display:block;font-size:15px;color:var(--ink2);margin-top:4px}
+.prog{height:8px;background:var(--line);border-radius:4px;margin-top:10px;overflow:hidden}
+.prog i{display:block;height:100%;border-radius:4px;background:var(--green)}
+.vcard.pronto .prog i{background:var(--amber)} .vcard.pasado .prog i{background:var(--red)}
+.vcard.sin{border-left-color:var(--grey);opacity:.9}
+.vcard.sin .prog{display:none}
+.sub2{font-family:var(--display);font-weight:700;font-size:20px;text-transform:uppercase;letter-spacing:.04em;margin-top:6px}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px;margin:0 -16px;padding-left:16px;padding-right:16px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.fc{flex:none;height:38px;padding:0 14px;border-radius:19px;border:1px solid var(--line);background:var(--card);font-weight:600;font-size:15px}
+.fc.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.year{font-family:var(--display);font-weight:800;font-size:30px;line-height:1;margin-top:6px;display:flex;align-items:baseline;justify-content:space-between}
+.year small{font-size:16px;font-weight:600;color:var(--ink2);font-family:var(--body)}
+.hrow{display:grid;grid-template-columns:48px 1fr auto;gap:10px;align-items:start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 14px;text-align:left;width:100%}
+.hrow .dt{font-family:var(--display);font-weight:700;font-size:18px;line-height:1.05;color:var(--ink2);text-transform:uppercase}
+.hrow .tx{font-weight:600}
+.hrow .mt{font-size:14px;color:var(--ink2);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.hrow .eu{font-family:var(--display);font-weight:700;font-size:20px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--t-otros)}
+.sw.mantenimiento{background:var(--t-mant)} .sw.reparacion{background:var(--t-rep)} .sw.neumaticos{background:var(--t-neum)}
+.sw.itv{background:var(--t-itv)} .sw.seguro{background:var(--t-seg)} .sw.impuesto{background:var(--t-imp)} .sw.otros{background:var(--t-otros)}
+
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.kpi.wide{grid-column:1 / -1}
+.kpi small{font-size:13px;color:var(--ink2);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.kpi b{display:block;font-family:var(--display);font-weight:800;font-size:38px;line-height:1.05}
+.ybar{display:grid;grid-template-columns:48px 1fr 70px;gap:10px;align-items:center}
+.ybar .y{font-family:var(--display);font-weight:700;font-size:20px}
+.ybar .tr{display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--line)}
+.ybar .tr span{display:block;min-width:2px;border-right:2px solid var(--card)}
+.ybar .tt{text-align:right;font-weight:600;font-size:15px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--ink2);margin-top:10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.brk{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:16px}
+.brk:last-child{border-bottom:0}
+.brk span{display:inline-flex;align-items:center;gap:8px}
+.t-mant{background:var(--t-mant)} .t-rep{background:var(--t-rep)} .t-neum{background:var(--t-neum)} .t-itv{background:var(--t-itv)} .t-seg{background:var(--t-seg)} .t-imp{background:var(--t-imp)} .t-otros{background:var(--t-otros)}
+.note{font-size:14px;color:var(--ink2)}
+
+.block{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 16px 8px}
+.bh{display:flex;justify-content:space-between;align-items:center;padding:8px 0 4px}
+.bh h3{font-family:var(--display);font-weight:700;font-size:23px;text-transform:uppercase;letter-spacing:.03em}
+.edit{height:34px;padding:0 14px;border-radius:17px;border:1px solid var(--line);font-weight:600;font-size:15px;color:var(--blue)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .edit{color:#8cb9ff}}
+:root[data-theme="dark"] .edit{color:#8cb9ff}
+.kv{display:grid;grid-template-columns:42% 1fr;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:16px}
+.kv dt{color:var(--ink2)} .kv dd{margin:0;font-weight:500;word-break:break-word}
+.danger{color:var(--red);font-weight:600}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;border-radius:14px;font-weight:600;padding:0 18px;width:100%;background:var(--blue);color:#fff}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.btn.bad{background:var(--red);color:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn.bad{color:#1c0705}}
+:root[data-theme="dark"] .btn.bad{color:#1c0705}
+.btn svg{width:22px;height:22px}
+
+/* Barra flotante */
+.barnav{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 12px);transform:translateX(-50%);width:min(456px,calc(100% - 24px));height:66px;background:#20262b;border-radius:24px;display:grid;grid-template-columns:1fr 1fr 82px 1fr 1fr;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.35);z-index:20}
+.barnav .t{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#aab3bb;font-size:12px;font-weight:600;position:relative}
+.barnav .t svg{width:24px;height:24px}
+.barnav .t.on{color:var(--yellow)}
+.barnav .t.on::before{content:"";position:absolute;top:7px;width:18px;height:3px;border-radius:2px;background:var(--yellow)}
+.barnav .plus{position:absolute;left:50%;top:-20px;transform:translateX(-50%);width:64px;height:64px;border-radius:50%;background:var(--yellow);color:#1b1500;display:grid;place-items:center;border:5px solid var(--bg);box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.barnav .plus svg{width:30px;height:30px;stroke-width:2.6}
+
+/* Hojas y avisos */
+.ov{position:fixed;inset:0;background:rgba(5,8,10,.55);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--card);width:100%;max-width:520px;max-height:92%;overflow-y:auto;border-radius:22px 22px 0 0;padding:10px 18px calc(env(safe-area-inset-bottom) + 22px);animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+.grab{width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 8px}
+.sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.sh h2{font-family:var(--display);font-weight:800;font-size:30px;text-transform:uppercase;line-height:1.05}
+.opt{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--bg);margin-top:10px}
+.opt svg{width:28px;height:28px;flex:none;color:var(--blue)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .opt svg{color:#8cb9ff}}
+:root[data-theme="dark"] .opt svg{color:#8cb9ff}
+.opt b{display:block;font-weight:600} .opt small{color:var(--ink2);font-size:14px}
+.fld{display:flex;flex-direction:column;gap:5px;margin-top:12px}
+.fld label{font-size:14px;font-weight:600;color:var(--ink2)}
+.fld input,.fld select,.fld textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;width:100%;min-height:48px}
+.fld textarea{min-height:80px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.pp{margin-top:6px}
+.pp textarea{width:100%;font:inherit;font-size:14px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px;min-height:120px}
+.docc{border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-top:10px;background:var(--bg)}
+.docc b{font-weight:600} .docc p{font-size:14px;color:var(--ink2);margin:2px 0 10px}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 100px);transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:14px;font-weight:600;font-size:15px;opacity:0;pointer-events:none;transition:.2s;z-index:60;max-width:min(440px,calc(100% - 32px));text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+/* Pantallas nuevas de la versión real */
+.pinwrap{display:flex;flex-direction:column;gap:6px;padding-top:12vh}
+.lead{color:var(--ink2);margin:4px 0 6px}
+.pinwrap input{font-size:28px;letter-spacing:.4em;text-align:center}
+.center{text-align:center;color:var(--ink2);padding:70px 0}
+.errbox{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--red);border-radius:14px;padding:14px 16px;margin:18px 0}
+.dgt.dS{background:#8a949c;font-size:14px}
+.warn{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:12px 14px;color:var(--ink2);font-size:15px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="sheetroot"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script>
+/* ===== Conexión con Supabase =====
+   Estos dos datos son PÚBLICOS por diseño: sin el PIN no abren nada.
+   La clave secreta (sb_secret_…) no va nunca aquí. */
+const SUPABASE_URL = 'https://tmhugbspwidqodzwukjd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_EPtVi1Mqg_VLZoOifS7g6w_1-O07C2h';
+
+/*LOGIC-START*/
+/* ===== Fechas ===== */
+const DAY = 864e5;
+const _n = new Date();
+const TODAY = new Date(_n.getFullYear(), _n.getMonth(), _n.getDate(), 12);
+const pd = s => { const [y, m, d] = s.slice(0, 10).split('-').map(Number); return new Date(y, m - 1, d, 12); };
+const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const addMonths = (d, n) => {
+  const x = new Date(d.getFullYear(), d.getMonth() + n, 1, 12);
+  const last = new Date(x.getFullYear(), x.getMonth() + 1, 0).getDate();
+  x.setDate(Math.min(d.getDate(), last));
+  return x;
+};
+const diffDays = (a, b) => Math.round((a - b) / DAY);
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const MESES_L = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const fdate = d => d.getDate() + ' ' + MESES[d.getMonth()] + ' ' + d.getFullYear();
+const fmt = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+const eur = n => (Math.round(n * 100) / 100).toLocaleString('es-ES', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }) + ' €';
+function when(days) {
+  if (days === 0) return 'hoy';
+  const a = Math.abs(days);
+  let t;
+  if (a <= 45) t = a + (a === 1 ? ' día' : ' días');
+  else {
+    const m = Math.round(a / 30.4);
+    if (m >= 12) {
+      const y = Math.floor(m / 12), r = m % 12;
+      t = y + (y > 1 ? ' años' : ' año') + (r ? ' y ' + r + (r > 1 ? ' meses' : ' mes') : '');
+    } else t = m + (m > 1 ? ' meses' : ' mes');
+  }
+  return days < 0 ? 'hace ' + t : 'en ' + t;
+}
+
+/* ===== Plantillas del plan según combustible ===== */
+const PLAN_EV = [
+  { id: 'rev', n: 'Revisión anual', m: 12, km: 20000 },
+  { id: 'habit', n: 'Filtro de habitáculo', m: 12 },
+  { id: 'frenos', n: 'Líquido de frenos', m: 24 },
+  { id: 'bateria', n: 'Batería de 12 V', m: 60 },
+  { id: 'neum', n: 'Neumáticos', m: 72, km: 45000 }
+];
+const PLAN_STD = [
+  { id: 'aceite', n: 'Aceite y filtro', m: 12, km: 15000 },
+  { id: 'aire', n: 'Filtro de aire', m: 24, km: 30000 },
+  { id: 'frenos', n: 'Líquido de frenos', m: 24 },
+  { id: 'bateria', n: 'Batería de 12 V', m: 60 },
+  { id: 'neum', n: 'Neumáticos', m: 60, km: 40000 }
+];
+const planFor = comb => (comb === 'Eléctrico' ? PLAN_EV : PLAN_STD).map(t => ({ ...t }));
+const TIPOS = [['mantenimiento', 'Mantenimiento'], ['reparacion', 'Reparación'], ['neumaticos', 'Neumáticos'], ['itv', 'ITV'], ['seguro', 'Seguro'], ['impuesto', 'Impuesto'], ['otros', 'Otros']];
+const TIPO_NAME = Object.fromEntries(TIPOS);
+const COMBUSTIBLES = ['Gasolina', 'Diésel', 'Híbrido', 'Híbrido enchufable', 'Microhíbrido', 'Eléctrico', 'GLP'];
+const ETIQUETAS = ['0', 'ECO', 'C', 'B', 'Sin etiqueta'];
+const COLORES = [['Blanco', '#eef1f3'], ['Negro', '#2b3036'], ['Gris', '#8b959e'], ['Plata', '#b9c1c8'], ['Azul', '#2f6fd1'], ['Rojo', '#d33a2c'], ['Verde', '#2e8b57'], ['Amarillo', '#e6b800'], ['Naranja', '#e8761a'], ['Marrón', '#7a5238'], ['Otro', '#8b959e']];
+
+/* ===== Datos (vienen de Supabase) ===== */
+let cars = [];
+let hist = [];
+const fromDb = c => ({
+  id: c.id, nombre: c.nombre, marca: c.marca || '', modelo: c.modelo || '', version: c.version || '', matricula: c.matricula || '',
+  matric: c.matriculacion || null, comb: c.combustible || 'Gasolina', dgt: c.etiqueta_dgt || 'Sin etiqueta', cv: c.potencia_cv,
+  bastidor: c.bastidor || '', color: c.color || '', hex: c.color_hex || '#8b959e',
+  km: c.km, kmDate: c.km_fecha, kmYear: c.km_anual, ultimaItv: c.ultima_itv,
+  seguro: c.seguro || {}, imp: c.impuesto || {}, neum: c.neumaticos || {}, taller: c.taller || {}, gar: c.garantia || {},
+  plan: c.plan && c.plan.length ? c.plan : planFor(c.combustible)
+});
+const fromApunte = a => ({
+  id: a.id, carId: a.coche_id, fecha: a.fecha, km: a.km, tipo: a.tipo, que: a.que, taller: a.taller || '',
+  coste: a.coste != null ? +a.coste : null, plan: a.plan || '', notas: a.notas || ''
+});
+
+/* ===== Cálculo de vencimientos ===== */
+const carHist = id => hist.filter(h => h.carId === id).sort((a, b) => b.fecha.localeCompare(a.fecha));
+
+function kmInfo(car) {
+  const h = carHist(car.id);
+  const pts = h.filter(x => x.km != null).map(x => ({ d: pd(x.fecha), km: x.km }));
+  if (car.km != null) pts.push({ d: car.kmDate ? pd(car.kmDate) : TODAY, km: car.km });
+  pts.sort((a, b) => a.d - b.d || a.km - b.km);
+  let perYear = car.kmYear;
+  if (!pts.length) return { last: null, perYear: perYear || 12000, now: null, kpd: (perYear || 12000) / 365, stale: false };
+  const last = pts[pts.length - 1];
+  if (!perYear) {
+    perYear = 12000;
+    if (pts.length >= 2) {
+      const first = pts[0];
+      const yrs = (last.d - first.d) / DAY / 365;
+      if (yrs >= 0.25 && last.km > first.km) perYear = Math.round((last.km - first.km) / yrs);
+    }
+  }
+  const days = Math.max(0, (TODAY - last.d) / DAY);
+  return { last, perYear, now: Math.round(last.km + perYear * days / 365), kpd: perYear / 365, stale: days > 14 };
+}
+
+function mkItem(o) {
+  const daysLeft = diffDays(o.due, TODAY);
+  const hasKm = o.dueKm != null && o.kmNow != null;
+  const kmLeft = hasKm ? Math.round(o.dueKm - o.kmNow) : null;
+  const past = daysLeft < 0 || (kmLeft != null && kmLeft < 0);
+  const soon = !past && (daysLeft <= 45 || (kmLeft != null && kmLeft <= 1500));
+  const estado = past ? 'pasado' : soon ? 'pronto' : 'ok';
+  const ft = (TODAY - o.start) / (o.due - o.start);
+  const fk = hasKm && o.startKm != null ? (o.kmNow - o.startKm) / (o.dueKm - o.startKm) : 0;
+  const frac = Math.min(1, Math.max(0, ft, fk));
+  const kmDays = kmLeft != null ? kmLeft / o.kpd : Infinity;
+  return {
+    carId: o.carId, key: o.key, label: o.label, tipo: o.tipo, plan: o.plan || '',
+    estado, due: o.due, dueKm: hasKm ? o.dueKm : null, daysLeft, kmLeft, frac,
+    urg: Math.min(daysLeft, kmDays), trig: kmLeft != null && kmDays < daysLeft ? 'km' : 'fecha'
+  };
+}
+const sinDato = (car, key, label, tipo, plan) => ({ carId: car.id, key, label, tipo, plan: plan || '', estado: 'sin', urg: Infinity });
+
+function itemsFor(car) {
+  const h = carHist(car.id);
+  const ki = kmInfo(car);
+  const out = [];
+  const base = { carId: car.id, kmNow: ki.now, kpd: ki.kpd };
+  /* ITV */
+  const mat = car.matric ? pd(car.matric) : null;
+  const itvs = h.filter(x => x.tipo === 'itv');
+  const lastItv = itvs.length ? pd(itvs[0].fecha) : car.ultimaItv ? pd(car.ultimaItv) : null;
+  if (lastItv) {
+    const age = mat ? diffDays(lastItv, mat) / 365.25 : 0;
+    out.push(mkItem({ ...base, key: 'itv', label: 'ITV', tipo: 'itv', start: lastItv, due: addMonths(lastItv, age >= 10 ? 12 : 24) }));
+  } else if (mat) {
+    const due = addMonths(mat, 48);
+    if (due < TODAY) out.push(sinDato(car, 'itv', 'ITV', 'itv'));
+    else out.push(mkItem({ ...base, key: 'itv', label: 'ITV', tipo: 'itv', start: mat, due }));
+  }
+  /* Seguro */
+  if (car.seguro && car.seguro.vence) {
+    const sv = pd(car.seguro.vence);
+    out.push(mkItem({ ...base, key: 'seguro', label: 'Seguro', tipo: 'seguro', start: addMonths(sv, -12), due: sv }));
+  }
+  /* Impuesto */
+  if (car.imp && car.imp.mes && car.imp.dia) {
+    const y = TODAY.getFullYear();
+    const mk = yy => new Date(yy, car.imp.mes - 1, car.imp.dia, 12);
+    const pays = h.filter(x => x.tipo === 'impuesto');
+    const paidThis = pays.some(x => pd(x.fecha).getFullYear() === y);
+    let due = mk(y);
+    if (paidThis) due = mk(y + 1);
+    else if (due < TODAY && pays.length === 0) due = mk(y + 1);
+    out.push(mkItem({ ...base, key: 'impuesto', label: 'Impuesto de circulación', tipo: 'impuesto', start: addMonths(due, -12), due }));
+  }
+  /* Plan de mantenimiento */
+  car.plan.forEach(t => {
+    const e = h.find(x => x.plan === t.id);
+    const tipo = t.id === 'neum' ? 'neumaticos' : 'mantenimiento';
+    if (!e) { out.push(sinDato(car, 'plan-' + t.id, t.n, tipo, t.id)); return; }
+    const start = pd(e.fecha);
+    const useKm = t.km && e.km != null && ki.now != null;
+    out.push(mkItem({
+      ...base, key: 'plan-' + t.id, label: t.n, tipo, plan: t.id, start, due: addMonths(start, t.m),
+      startKm: useKm ? e.km : null, dueKm: useKm ? e.km + t.km : null
+    }));
+  });
+  return out.sort((a, b) => a.urg - b.urg);
+}
+function counts(items) {
+  return { p: items.filter(i => i.estado === 'pasado').length, s: items.filter(i => i.estado === 'pronto').length, o: items.filter(i => i.estado === 'ok').length };
+}
+function lines(it) {
+  if (it.estado === 'sin') return ['Sin dato', 'Apunta cuándo se hizo por última vez y empezará a contar.'];
+  let l1, l2 = '';
+  if (it.daysLeft < 0) l1 = 'Venció ' + when(it.daysLeft) + ' (' + fdate(it.due) + ')';
+  else if (it.kmLeft != null && it.kmLeft < 0) l1 = 'Superaste los ' + fmt(it.dueKm) + ' km';
+  else l1 = 'Vence el ' + fdate(it.due) + ' · ' + when(it.daysLeft);
+  if (it.dueKm != null) {
+    l2 = it.kmLeft >= 0 ? 'o a los ' + fmt(it.dueKm) + ' km · faltan ' + fmt(it.kmLeft) : 'o a los ' + fmt(it.dueKm) + ' km · pasados por ' + fmt(-it.kmLeft);
+    if (it.daysLeft < 0 && it.kmLeft < 0) l1 = 'Venció ' + when(it.daysLeft) + ' y superaste los km';
+  }
+  return [l1, l2];
+}
+function shortWhen(it) {
+  if (it.estado === 'sin') return 'Sin dato';
+  if (it.daysLeft < 0) return when(it.daysLeft);
+  if (it.kmLeft != null && it.kmLeft < 0) return 'km superados';
+  return it.trig === 'km' ? 'faltan ' + fmt(it.kmLeft) + ' km' : when(it.daysLeft);
+}
+const CHIP = { pasado: 'Pasado', pronto: 'Pronto', ok: 'Al día', sin: 'Sin dato' };
+/*LOGIC-END*/
+
+/* ===== Hablar con Supabase ===== */
+let PIN = '';
+async function rpc(fn, args) {
+  let res;
+  try {
+    res = await fetch(SUPABASE_URL + '/rest/v1/rpc/' + fn, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify(args)
+    });
+  } catch (e) { return { ok: false, error: 'red' }; }
+  if (!res.ok) {
+    let t = '';
+    try { const j = await res.json(); t = j.message || j.hint || ''; } catch (e) {}
+    return { ok: false, error: 'servidor', detalle: t || ('código ' + res.status) };
+  }
+  try { return await res.json(); } catch (e) { return { ok: false, error: 'servidor', detalle: 'respuesta vacía' }; }
+}
+function errMsg(r) {
+  switch (r.error) {
+    case 'pin_incorrecto': return 'PIN incorrecto. Te quedan ' + r.intentos_restantes + (r.intentos_restantes === 1 ? ' intento.' : ' intentos.');
+    case 'bloqueado': return 'Demasiados fallos. Espera ' + (r.minutos || 15) + ' minutos y vuelve a probar.';
+    case 'sin_pin': return 'La base de datos no tiene PIN guardado.';
+    case 'red': return 'No hay conexión con el servidor. Si hace días que no usas la app, puede que Supabase haya pausado el proyecto.';
+    case 'falta_nombre': return 'Falta el nombre del coche.';
+    case 'faltan_datos': return 'Faltan datos: la fecha y qué se hizo.';
+    default: return 'El servidor devolvió un error' + (r.detalle ? ': ' + r.detalle : '.');
+  }
+}
+async function api(fn, args) {
+  const r = await rpc(fn, Object.assign({ p_pin: PIN }, args));
+  if (!r.ok && ['pin_incorrecto', 'bloqueado', 'sin_pin'].includes(r.error)) {
+    forgetPin(); closeSheet(); S.screen = 'pin'; S.msg = errMsg(r); render();
+  }
+  return r;
+}
+function forgetPin() { PIN = ''; try { localStorage.removeItem('garaje-pin'); } catch (e) {} }
+async function reload() {
+  const r = await api('listar_datos', {});
+  if (r.ok) { cars = r.coches.map(fromDb); hist = r.apuntes.map(fromApunte); }
+  return r;
+}
+
+/* ===== Iconos y dibujos ===== */
+const IC = {
+  next: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  hist: '<path d="M8 6h12M8 12h12M8 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
+  chart: '<path d="M5 20V10M12 20V4M19 20v-7"/>',
+  ficha: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  back: '<path d="M15 5l-7 7 7 7"/>',
+  phone: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A15 15 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>',
+  moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  camera: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  gauge: '<path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/>',
+  wrench: '<path d="M14.5 6.5a4 4 0 0 0-5 5L4 17l3 3 5.5-5.5a4 4 0 0 0 5-5l-2.5 2.5-2.5-.5-.5-2.5z"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'
+};
+const ic = n => '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' + IC[n] + '</svg>';
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function carSvg(hex, cls) {
+  return '<svg class="' + (cls || '') + '" viewBox="0 0 200 96" role="img" aria-label="Silueta del coche">' +
+    '<ellipse cx="100" cy="88" rx="86" ry="5" fill="#000" opacity=".35"/>' +
+    '<path d="M8 66 C8 57 12 53 20 51 L46 45 C56 31 70 21 92 21 L128 21 C146 21 158 33 166 45 L184 49 C192 51 194 57 194 66 L194 72 C194 75 192 76 190 76 L10 76 C8 76 8 74 8 72 Z" fill="' + esc(hex) + '" stroke="rgba(255,255,255,.28)" stroke-width="1.5"/>' +
+    '<path d="M54 45 C62 35 74 27 92 27 L100 27 L100 45 Z" fill="#222a30" opacity=".92"/>' +
+    '<path d="M107 27 L126 27 C138 27 148 35 154 45 L107 45 Z" fill="#222a30" opacity=".92"/>' +
+    '<path d="M60 44 C66 37 74 31 84 29" stroke="#fff" stroke-opacity=".35" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+    '<rect x="186" y="55" width="8" height="5" rx="2" fill="#ffe27a"/><rect x="8" y="57" width="6" height="5" rx="2" fill="#e5382c"/>' +
+    '<path d="M20 70 H178" stroke="rgba(0,0,0,.18)" stroke-width="1.5"/>' +
+    '<circle cx="50" cy="76" r="15" fill="#0f1215"/><circle cx="50" cy="76" r="7" fill="#c9d0d6"/><circle cx="50" cy="76" r="2.5" fill="#0f1215"/>' +
+    '<circle cx="152" cy="76" r="15" fill="#0f1215"/><circle cx="152" cy="76" r="7" fill="#c9d0d6"/><circle cx="152" cy="76" r="2.5" fill="#0f1215"/>' +
+    '</svg>';
+}
+const plate = c => c.matricula ? '<span class="plate" aria-label="Matrícula ' + esc(c.matricula) + '"><span class="eu">E</span><span class="nr">' + esc(c.matricula) + '</span></span>' : '';
+const dgtKey = c => (c.dgt === 'Sin etiqueta' ? 'S' : c.dgt);
+const dgtLabel = c => '<span class="dgt d' + esc(dgtKey(c)) + '" aria-hidden="true">' + (c.dgt === 'Sin etiqueta' ? 'S/E' : esc(c.dgt)) + '</span>';
+const DGT_TXT = { '0': 'Etiqueta 0 emisiones', ECO: 'Etiqueta ECO', C: 'Etiqueta C', B: 'Etiqueta B', 'Sin etiqueta': 'Sin etiqueta' };
+
+/* ===== Estado de pantalla ===== */
+const S = { screen: 'loading', msg: '', carId: null, tab: 'proximo', filter: 'todos', anim: '' };
+const car = () => cars.find(c => c.id === S.carId);
+const app = document.getElementById('app');
+const root = document.getElementById('sheetroot');
+
+function effTheme() {
+  const t = document.documentElement.getAttribute('data-theme');
+  if (t) return t;
+  return window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+function themeBtn() {
+  const dark = effTheme() === 'dark';
+  return '<button class="iconbtn" data-a="theme" aria-label="Cambiar a tema ' + (dark ? 'claro' : 'oscuro') + '">' + ic(dark ? 'sun' : 'moon') + '</button>';
+}
+
+/* ===== Pantallas de entrada ===== */
+function viewPin() {
+  return '<div class="pinwrap"><h1 class="brand">Garaje</h1><div class="road" aria-hidden="true"></div>' +
+    '<p class="lead">Escribe el PIN de la familia. Este móvil lo recordará.</p>' +
+    '<form id="f-pin" novalidate><div class="fld"><label for="p-pin">PIN (4 a 8 números)</label>' +
+    '<input id="p-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" autocapitalize="off"></div>' +
+    '<p class="note danger" id="p-err" role="alert" style="margin-top:10px;' + (S.msg ? '' : 'display:none') + '">' + esc(S.msg) + '</p>' +
+    '<div class="actions"><button class="btn" type="submit" data-t="Entrar">Entrar</button></div></form></div>';
+}
+const viewLoading = () => '<div class="center">Cargando tu garaje…</div>';
+function viewError() {
+  return '<div class="pinwrap"><h1 class="brand">Garaje</h1><div class="road" aria-hidden="true"></div>' +
+    '<div class="errbox" role="alert">' + esc(S.msg) + '</div>' +
+    '<button class="btn" data-a="retry">Reintentar</button></div>';
+}
+
+/* ===== Vista: Garaje ===== */
+function viewHome() {
+  const all = [];
+  let P = 0, SO = 0;
+  const cards = cars.map(c => {
+    const it = itemsFor(c); const n = counts(it);
+    P += n.p; SO += n.s;
+    it.filter(i => i.estado === 'pasado' || i.estado === 'pronto').forEach(i => all.push({ c, i }));
+    const b = n.p ? '<span class="badge red" aria-label="' + n.p + ' pasados">' + n.p + '</span>'
+      : n.s ? '<span class="badge amber" aria-label="' + n.s + ' pronto">' + n.s + '</span>'
+      : '<span class="badge green" aria-label="Al día">' + ic('check') + '</span>';
+    return '<button class="cc" data-a="open" data-car="' + c.id + '" aria-label="' + esc(c.nombre) + '">' +
+      '<div class="win">' + carSvg(c.hex) + b + '</div>' +
+      '<div class="info"><span class="nm">' + esc(c.nombre) + '</span><span class="pl">' + esc(c.matricula) + '</span></div></button>';
+  }).join('');
+  all.sort((a, b) => a.i.urg - b.i.urg);
+  const rows = all.slice(0, 8).map(({ c, i }) =>
+    '<button class="row ' + i.estado + '" data-a="open" data-car="' + c.id + '"><span class="bar"></span>' +
+    '<span><span class="who">' + esc(c.nombre) + '</span><br><span class="what">' + esc(i.label) + '</span></span>' +
+    '<span class="when">' + esc(shortWhen(i)) + '</span></button>').join('');
+  const hoy = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(TODAY);
+  let sum;
+  if (!cars.length) sum = 'Aún no hay coches. Añade el primero.';
+  else if (!P && !SO) sum = 'Todo al día. Nada que hacer por ahora.';
+  else {
+    const a = P ? '<b class="r num">' + P + '</b> ' + (P === 1 ? 'vencimiento pasado' : 'vencimientos pasados') : '';
+    const b = SO ? '<b class="a num">' + SO + '</b> ' + (SO === 1 ? 'que llega pronto' : 'que llegan pronto') : '';
+    sum = a && b ? a + ' y ' + b + '.' : (a || b) + '.';
+  }
+  return '<div class="top"><span class="datebar">' + esc(hoy.charAt(0).toUpperCase() + hoy.slice(1)) + '</span>' +
+    '<span style="display:flex;gap:8px"><button class="iconbtn" data-a="lock" aria-label="Bloquear y olvidar el PIN en este móvil">' + ic('lock') + '</button>' + themeBtn() + '</span></div>' +
+    '<h1 class="brand">Garaje</h1><p class="summary">' + sum + '</p><div class="road" aria-hidden="true"></div>' +
+    '<div class="grid">' + cards +
+    '<button class="cc add" data-a="car-new">' + ic('plus') + '<span>Añadir coche</span></button></div>' +
+    (cars.length ? '<h2 class="sec" style="margin-top:26px">Lo próximo</h2>' +
+      (rows ? '<div class="list">' + rows + '</div>' : '<div class="empty">No hay nada pasado ni cercano.</div>') : '');
+}
+
+/* ===== Vista: Coche ===== */
+function digitsHtml(n) {
+  if (n == null) return '<div class="digits"><i>–</i></div>';
+  return '<div class="digits num" aria-label="' + fmt(n) + ' kilómetros">' +
+    fmt(n).split('').map(ch => ch === '.' ? '<i class="sep">.</i>' : '<i>' + ch + '</i>').join('') + '</div>';
+}
+function vcard(i) {
+  const [l1, l2] = lines(i);
+  return '<button class="vcard ' + i.estado + '" data-a="entry-from" data-key="' + i.key + '">' +
+    '<span class="vhead"><span class="vt">' + esc(i.label) + '</span><span class="chip ' + i.estado + '">' + CHIP[i.estado] + '</span></span>' +
+    '<span class="vp">' + esc(l1) + '</span>' + (l2 ? '<span class="vp">' + esc(l2) + '</span>' : '') +
+    (i.estado !== 'sin' ? '<span class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(i.frac * 100) + '" aria-label="Tiempo consumido"><i style="width:' + Math.round(i.frac * 100) + '%"></i></span>' : '') +
+    '</button>';
+}
+function tabProximo(c, items) {
+  const ki = kmInfo(c);
+  const hint = ki.last ? 'Toca para actualizarlo<br>Último dato: ' + esc(fdate(ki.last.d)) : 'Toca para apuntar los km';
+  const tel = c.seguro && c.seguro.tel;
+  return '<button class="odo" data-a="km"><span><span class="lab">Kilómetros' + (ki.stale ? ' · estimado' : '') + '</span>' + digitsHtml(ki.now) +
+    '</span><span class="hint">' + hint + '</span></button>' +
+    (tel ? '<a class="call" href="tel:' + esc(tel.replace(/\s/g, '')) + '">' + ic('phone') +
+      '<span><b>Asistencia en carretera</b><small>' + esc(c.seguro.cia || 'Seguro') + ' · ' + esc(tel) + '</small></span></a>'
+      : '<div class="warn">Aún no hay teléfono de asistencia en carretera. Se añade con los datos del seguro (fase 3).</div>') +
+    items.map(vcard).join('');
+}
+function tabHistorial(c) {
+  const h = carHist(c.id).filter(x => S.filter === 'todos' || x.tipo === S.filter);
+  const chips = [['todos', 'Todos']].concat(TIPOS).map(([k, n]) => '<button class="fc ' + (S.filter === k ? 'on' : '') + '" data-a="filter" data-f="' + k + '">' + n + '</button>').join('');
+  let body = '';
+  if (!h.length) body = '<div class="empty">' + (S.filter === 'todos' ? 'Aún no hay apuntes. Pulsa + para apuntar el primero.' : 'No hay apuntes de este tipo.') + '</div>';
+  else {
+    const byY = {};
+    h.forEach(x => { const y = x.fecha.slice(0, 4); (byY[y] = byY[y] || []).push(x); });
+    body = Object.keys(byY).sort().reverse().map(y => {
+      const tot = byY[y].reduce((s, x) => s + (x.coste || 0), 0);
+      return '<div class="year"><span>' + y + '</span><small class="num">' + (tot ? eur(tot) : '') + '</small></div><div class="list">' +
+        byY[y].map(x => {
+          const d = pd(x.fecha);
+          return '<button class="hrow" data-a="entry" data-id="' + x.id + '"><span class="dt num">' + d.getDate() + '<br>' + MESES[d.getMonth()] + '</span>' +
+            '<span><span class="tx">' + esc(x.que) + '</span><span class="mt"><span class="sw ' + x.tipo + '"></span>' + esc(TIPO_NAME[x.tipo] || x.tipo) +
+            (x.km != null ? ' · ' + fmt(x.km) + ' km' : '') + (x.taller ? ' · ' + esc(x.taller) : '') + '</span></span>' +
+            '<span class="eu num">' + (x.coste ? eur(x.coste) : '') + '</span></button>';
+        }).join('') + '</div>';
+    }).join('');
+  }
+  return '<div class="chips" role="group" aria-label="Filtrar por tipo">' + chips + '</div>' + body;
+}
+function tabGastos(c) {
+  const h = carHist(c.id).filter(x => x.coste > 0);
+  const byY = {};
+  h.forEach(x => { const y = x.fecha.slice(0, 4); const o = byY[y] = byY[y] || { total: 0, t: {} }; o.total += x.coste; o.t[x.tipo] = (o.t[x.tipo] || 0) + x.coste; });
+  const years = Object.keys(byY).sort().reverse();
+  const thisY = String(TODAY.getFullYear());
+  const tot = byY[thisY] ? byY[thisY].total : 0;
+  const avg = tot / (TODAY.getMonth() + 1);
+  const max = Math.max(1, ...years.map(y => byY[y].total));
+  const cls = { mantenimiento: 't-mant', reparacion: 't-rep', neumaticos: 't-neum', itv: 't-itv', seguro: 't-seg', impuesto: 't-imp', otros: 't-otros' };
+  const bars = years.map(y => '<div class="ybar"><span class="y num">' + y + '</span><span class="tr" style="width:' + Math.max(8, byY[y].total / max * 100) + '%">' +
+    TIPOS.filter(([k]) => byY[y].t[k]).map(([k, n]) => '<span class="' + cls[k] + '" style="flex:' + byY[y].t[k] + '" title="' + n + ': ' + eur(byY[y].t[k]) + '"></span>').join('') +
+    '</span><span class="tt num">' + eur(byY[y].total) + '</span></div>').join('');
+  const brkYear = years[0];
+  const brk = brkYear ? TIPOS.filter(([k]) => byY[brkYear].t[k]).map(([k, n]) =>
+    '<div class="brk"><span><i class="sw ' + k + '"></i>' + n + '</span><b class="num">' + eur(byY[brkYear].t[k]) + '</b></div>').join('') : '';
+  const legend = TIPOS.map(([k, n]) => '<span><i class="sw ' + k + '"></i>' + n + '</span>').join('');
+  return '<div class="kpis"><div class="kpi wide"><small>Gastado en ' + thisY + '</small><b class="num">' + eur(tot) + '</b></div>' +
+    '<div class="kpi"><small>Media al mes</small><b class="num">' + eur(avg) + '</b></div>' +
+    '<div class="kpi"><small>Km al año</small><b class="num">' + fmt(kmInfo(c).perYear) + '</b></div></div>' +
+    '<div class="block" style="padding:14px 16px"><h3 class="sub2" style="margin:0 0 12px">Por año</h3><div class="list" style="gap:10px">' + (bars || '<div class="empty">Aún no hay gastos.</div>') + '</div>' +
+    '<div class="legend">' + legend + '</div></div>' +
+    (brkYear ? '<div class="block" style="padding:12px 16px"><h3 class="sub2" style="margin:0 0 4px">Desglose de ' + brkYear + '</h3>' + brk + '</div>' : '') +
+    '<p class="note">Aquí no cuentan el combustible ni la carga, a propósito.</p>';
+}
+function kv(k, v) { return '<dl style="margin:0"><div class="kv"><dt>' + k + '</dt><dd>' + (v === '' || v == null ? '—' : esc(v)) + '</dd></div></dl>'; }
+function block(title, rows, editAction) {
+  return '<section class="block"><div class="bh"><h3>' + title + '</h3>' +
+    (editAction ? '<button class="edit" data-a="' + editAction + '">Editar</button>' : '<button class="edit" data-a="soon" data-m="Editar este bloque llega en la fase 3.">Editar</button>') + '</div>' +
+    rows.map(r => kv(r[0], r[1])).join('') + '</section>';
+}
+function tabFicha(c, items) {
+  const itv = items.find(i => i.key === 'itv'), imp = items.find(i => i.key === 'impuesto');
+  const itvs = carHist(c.id).filter(x => x.tipo === 'itv');
+  const s = c.seguro || {}, n = c.neum || {}, t = c.taller || {}, g = c.gar || {};
+  return block('Datos del coche', [['Marca y modelo', (c.marca + ' ' + c.modelo).trim()], ['Versión', c.version], ['Matrícula', c.matricula],
+    ['Primera matriculación', c.matric ? fdate(pd(c.matric)) : ''], ['Combustible', c.comb], ['Etiqueta DGT', DGT_TXT[c.dgt]], ['Potencia', c.cv ? c.cv + ' CV' : ''], ['Color', c.color], ['Bastidor', c.bastidor],
+    ['Kilómetros', c.km != null ? fmt(c.km) + ' km' + (c.kmDate ? ' (' + fdate(pd(c.kmDate)) + ')' : '') : '']], 'car-edit') +
+    block('Seguro', [['Compañía', s.cia], ['Póliza', s.poliza], ['Cobertura', s.cob], ['Vence', s.vence ? fdate(pd(s.vence)) : ''], ['Prima', s.prima != null ? eur(s.prima) : ''], ['Asistencia', s.tel]]) +
+    block('ITV e impuesto', [['Última ITV', itvs.length ? fdate(pd(itvs[0].fecha)) : 'Sin dato'], ['Próxima ITV', itv && itv.due ? fdate(itv.due) : 'Sin dato'],
+      ['Impuesto', c.imp && c.imp.dia ? c.imp.dia + ' de ' + MESES_L[c.imp.mes - 1] + (c.imp.importe != null ? ' · ' + eur(c.imp.importe) : '') : ''],
+      ['Próximo pago', imp && imp.due ? fdate(imp.due) : '']]) +
+    block('Neumáticos', [['Medida', n.medida], ['Presiones', n.pres]]) +
+    block('Plan de mantenimiento', c.plan.map(p => [p.n, p.m + ' meses' + (p.km ? ' o ' + fmt(p.km) + ' km' : '')])) +
+    block('Taller y garantía', [['Taller', t.n], ['Teléfono', t.tel], ['Garantía hasta', g.hasta ? fdate(pd(g.hasta)) : 'Sin garantía'], ['Nota', g.nota]]) +
+    '<button class="btn" data-a="soon" data-m="El enlace de solo lectura llega en la fase 5.">Compartir enlace de solo lectura</button>' +
+    '<button class="btn ghost danger" data-a="car-del">Borrar este coche</button>';
+}
+function viewCar() {
+  const c = car();
+  const items = itemsFor(c); const n = counts(items);
+  const idx = cars.indexOf(c);
+  const dots = cars.map((x, k) => '<i class="' + (k === idx ? 'on' : '') + '"></i>').join('');
+  const pane = S.tab === 'proximo' ? tabProximo(c, items) : S.tab === 'historial' ? tabHistorial(c) : S.tab === 'gastos' ? tabGastos(c) : tabFicha(c, items);
+  const tabs = [['proximo', 'Próximo', 'next'], ['historial', 'Historial', 'hist'], null, ['gastos', 'Gastos', 'chart'], ['ficha', 'Ficha', 'ficha']];
+  const bar = tabs.map(t => t ? '<button class="t ' + (S.tab === t[0] ? 'on' : '') + '" data-a="tab" data-tab="' + t[0] + '" ' + (S.tab === t[0] ? 'aria-current="page"' : '') + '>' + ic(t[2]) + '<span>' + t[1] + '</span></button>' : '<span></span>').join('');
+  const sub = (c.marca + ' ' + c.modelo + ' ' + c.version).trim();
+  return '<div class="top"><button class="backbtn" data-a="home">' + ic('back') + 'Garaje</button>' + themeBtn() + '</div>' +
+    '<div class="stage ' + (S.anim ? 'slide-' + S.anim : '') + '" data-swipe>' +
+    (cars.length > 1 ? '<button class="nav l" data-a="prev" aria-label="Coche anterior">' + ic('back') + '</button>' : '') + carSvg(c.hex, 'car') +
+    (cars.length > 1 ? '<button class="nav r" data-a="next" aria-label="Coche siguiente">' + ic('back') + '</button><div class="dots" aria-hidden="true">' + dots + '</div>' : '') + '</div>' +
+    '<div class="ident"><h1>' + esc(c.nombre) + '</h1>' + (sub ? '<p class="sub">' + esc(sub) + '</p>' : '') +
+    '<div class="tags">' + plate(c) + dgtLabel(c) + '<span class="dgtname">' + esc(c.comb) + ' · ' + esc(DGT_TXT[c.dgt]) + '</span></div></div>' +
+    '<div class="stats"><div class="stat r"><b class="num">' + n.p + '</b><span>Pasados</span></div><div class="stat a"><b class="num">' + n.s + '</b><span>Pronto</span></div><div class="stat g"><b class="num">' + n.o + '</b><span>Al día</span></div></div>' +
+    '<div class="pane">' + pane + '</div>' +
+    '<nav class="barnav" aria-label="Secciones del coche">' + bar + '<button class="plus" data-a="plus" aria-label="Añadir un apunte">' + ic('plus') + '</button></nav>';
+}
+
+function render(keepScroll) {
+  const y = window.scrollY;
+  if (S.screen === 'car' && !car()) S.screen = 'home';
+  app.className = S.screen === 'car' ? 'has-bar' : '';
+  app.innerHTML = S.screen === 'pin' ? viewPin() : S.screen === 'loading' ? viewLoading() : S.screen === 'error' ? viewError() : S.screen === 'home' ? viewHome() : viewCar();
+  S.anim = '';
+  window.scrollTo(0, keepScroll ? y : 0);
+  if (S.screen === 'pin') { const i = document.getElementById('p-pin'); if (i) i.focus({ preventScroll: true }); }
+}
+
+/* ===== Hojas (ventanas desde abajo) ===== */
+function openSheet(title, html) {
+  root.innerHTML = '<div class="ov" data-a="close-ov"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-t"><div class="grab"></div>' +
+    '<div class="sh"><h2 id="sheet-t">' + title + '</h2><button class="iconbtn" data-a="close" aria-label="Cerrar">' + ic('close') + '</button></div>' + html + '</div></div>';
+  const first = root.querySelector('button.iconbtn'); if (first) first.focus({ preventScroll: true });
+}
+function closeSheet() { root.innerHTML = ''; }
+let tt;
+function toast(m) {
+  const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show');
+  clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 3200);
+}
+function busy(form, on) {
+  const b = form.querySelector('button[type=submit]');
+  if (b) { b.disabled = on; b.textContent = on ? 'Guardando…' : (b.dataset.t || 'Guardar'); }
+}
+function formErr(id, text) { const e = document.getElementById(id); if (e) { e.textContent = text; e.style.display = 'block'; } }
+const opts = (list, sel) => list.map(x => '<option value="' + esc(x) + '"' + (x === sel ? ' selected' : '') + '>' + esc(x) + '</option>').join('');
+
+function plusMenu() {
+  openSheet('Añadir',
+    '<button class="opt" data-a="entry-new">' + ic('wrench') + '<span><b>Apuntar algo hecho</b><small>Revisión, reparación, ITV, seguro…</small></span></button>' +
+    '<button class="opt" data-a="km">' + ic('gauge') + '<span><b>Actualizar kilómetros</b><small>Lo que marca el cuentakilómetros hoy</small></span></button>' +
+    '<button class="opt" data-a="import">' + ic('camera') + '<span><b>Importar desde una foto</b><small>Factura, ficha técnica, seguro o ITV</small></span></button>');
+}
+
+/* ---- Apuntes ---- */
+function entryForm(e, pre) {
+  const c = car();
+  const v = e || pre || {};
+  const ki = kmInfo(c);
+  const tipoOpts = TIPOS.map(([k, n]) => '<option value="' + k + '"' + (v.tipo === k ? ' selected' : '') + '>' + n + '</option>').join('');
+  const planOpts = '<option value="">Ninguna</option>' + c.plan.map(t => '<option value="' + esc(t.id) + '"' + (v.plan === t.id ? ' selected' : '') + '>' + esc(t.n) + '</option>').join('');
+  const km = v.km != null ? v.km : (e ? '' : (ki.now != null ? ki.now : ''));
+  openSheet(e ? 'Editar apunte' : 'Apuntar algo hecho',
+    '<form id="f-entry" data-id="' + (e ? e.id : '') + '" novalidate>' +
+    '<div class="two"><div class="fld"><label for="e-fecha">Fecha</label><input id="e-fecha" type="date" required value="' + (v.fecha || iso(TODAY)) + '"></div>' +
+    '<div class="fld"><label for="e-km">Kilómetros</label><input id="e-km" type="number" inputmode="numeric" min="0" value="' + km + '"></div></div>' +
+    '<div class="fld"><label for="e-tipo">Tipo</label><select id="e-tipo">' + tipoOpts + '</select></div>' +
+    '<div class="fld"><label for="e-que">Qué se hizo</label><input id="e-que" type="text" required value="' + esc(v.que || '') + '" placeholder="Por ejemplo: aceite y filtro"></div>' +
+    '<div class="fld"><label for="e-plan">Cumple del plan</label><select id="e-plan">' + planOpts + '</select></div>' +
+    '<div class="two"><div class="fld"><label for="e-taller">Taller</label><input id="e-taller" type="text" value="' + esc(v.taller || '') + '"></div>' +
+    '<div class="fld"><label for="e-coste">Coste (€)</label><input id="e-coste" type="number" inputmode="decimal" step="0.01" min="0" value="' + (v.coste != null ? v.coste : '') + '"></div></div>' +
+    '<div class="fld"><label for="e-notas">Notas</label><textarea id="e-notas">' + esc(v.notas || '') + '</textarea></div>' +
+    '<p class="note" id="e-hint" style="margin-top:10px;display:none">Al guardar una renovación, el vencimiento del seguro salta un año solo.</p>' +
+    '<p class="note danger" id="e-err" role="alert" style="margin-top:10px;display:none"></p>' +
+    '<div class="actions"><button class="btn" type="submit" data-t="Guardar">Guardar</button><button class="btn ghost" type="button" data-a="close">Cancelar</button></div></form>');
+  const hint = () => { document.getElementById('e-hint').style.display = !e && document.getElementById('e-tipo').value === 'seguro' && c.seguro && c.seguro.vence ? 'block' : 'none'; };
+  document.getElementById('e-tipo').addEventListener('change', hint); hint();
+}
+function entryFromItem(key) {
+  const c = car();
+  const it = itemsFor(c).find(i => i.key === key);
+  const pre = { tipo: it.tipo, que: it.label, plan: it.plan };
+  if (key === 'impuesto' && c.imp && c.imp.importe != null) pre.coste = c.imp.importe;
+  if (key === 'seguro' && c.seguro && c.seguro.prima != null) pre.coste = c.seguro.prima;
+  entryForm(null, pre);
+}
+function entryDetail(id) {
+  const x = hist.find(h => h.id === id); if (!x) return;
+  const plan = x.plan ? (car().plan.find(t => t.id === x.plan) || {}).n : '';
+  openSheet('Apunte',
+    kv('Fecha', fdate(pd(x.fecha))) + kv('Tipo', TIPO_NAME[x.tipo]) + kv('Qué se hizo', x.que) + kv('Kilómetros', x.km != null ? fmt(x.km) + ' km' : '') +
+    kv('Taller', x.taller) + kv('Coste', x.coste ? eur(x.coste) : '') + kv('Cumple del plan', plan) + kv('Notas', x.notas) +
+    '<div class="actions" id="det-actions"><button class="btn" data-a="entry-edit" data-id="' + x.id + '">Editar</button><button class="btn ghost danger" data-a="entry-del" data-id="' + x.id + '">Borrar</button></div>');
+}
+async function saveEntry(f) {
+  const err = 'e-err';
+  const fecha = document.getElementById('e-fecha').value, que = document.getElementById('e-que').value.trim();
+  if (!fecha || !que) return formErr(err, 'Falta la fecha o qué se hizo.');
+  const kmv = document.getElementById('e-km').value, cv = document.getElementById('e-coste').value;
+  const o = {
+    coche_id: S.carId, fecha, km: kmv === '' ? null : +kmv, tipo: document.getElementById('e-tipo').value, que,
+    taller: document.getElementById('e-taller').value.trim() || null, coste: cv === '' ? null : +cv,
+    plan: document.getElementById('e-plan').value || null, notas: document.getElementById('e-notas').value.trim() || null
+  };
+  const id = f.dataset.id; if (id) o.id = id;
+  busy(f, true);
+  const r = await api('guardar_apunte', { p_apunte: o });
+  if (!r.ok) { busy(f, false); return formErr(err, errMsg(r)); }
+  const c = car(); let msg = 'Apunte guardado';
+  if (!id && o.tipo === 'seguro' && c.seguro && c.seguro.vence) {
+    const nv = iso(addMonths(pd(c.seguro.vence), 12));
+    const r2 = await api('guardar_coche', { p_coche: { id: c.id, seguro: Object.assign({}, c.seguro, { vence: nv }) } });
+    msg = r2.ok ? 'Guardado. El seguro vence ahora el ' + fdate(pd(nv)) : 'Apunte guardado, pero no se pudo mover el vencimiento del seguro.';
+  }
+  if (o.plan) { const t = c.plan.find(p => p.id === o.plan); if (t) msg += ' · «' + t.n + '» vuelve a empezar'; }
+  const rl = await reload();
+  if (!rl.ok) { busy(f, false); return formErr(err, errMsg(rl)); }
+  closeSheet(); render(true); toast(msg);
+}
+
+/* ---- Kilómetros ---- */
+function kmForm() {
+  const ki = kmInfo(car());
+  openSheet('Actualizar km',
+    '<p class="note">Escribe lo que marca el cuentakilómetros hoy.</p>' +
+    '<form id="f-km" novalidate><div class="fld"><label for="k-km">Kilómetros</label><input id="k-km" type="number" inputmode="numeric" min="0" value="' + (ki.now != null ? ki.now : '') + '"></div>' +
+    '<p class="note danger" id="k-err" role="alert" style="margin-top:10px;display:none"></p>' +
+    '<div class="actions"><button class="btn" type="submit" data-t="Guardar">Guardar</button><button class="btn ghost" type="button" data-a="close">Cancelar</button></div></form>');
+}
+async function saveKm(f) {
+  const v = document.getElementById('k-km').value;
+  if (v === '' || +v < 0) return formErr('k-err', 'Escribe un número de kilómetros.');
+  busy(f, true);
+  const r = await api('guardar_coche', { p_coche: { id: S.carId, km: +v, km_fecha: iso(TODAY) } });
+  if (!r.ok) { busy(f, false); return formErr('k-err', errMsg(r)); }
+  const rl = await reload();
+  if (!rl.ok) { busy(f, false); return formErr('k-err', errMsg(rl)); }
+  closeSheet(); render(true); toast('Kilómetros actualizados');
+}
+
+/* ---- Coches ---- */
+function carForm(c) {
+  const v = c || { comb: 'Gasolina', dgt: 'C' };
+  openSheet(c ? 'Editar coche' : 'Añadir coche',
+    '<form id="f-car" data-id="' + (c ? c.id : '') + '" novalidate>' +
+    '<div class="fld"><label for="c-nombre">Nombre corto</label><input id="c-nombre" type="text" required value="' + esc(v.nombre || '') + '" placeholder="Por ejemplo: Ibiza"></div>' +
+    '<div class="two"><div class="fld"><label for="c-marca">Marca</label><input id="c-marca" type="text" value="' + esc(v.marca || '') + '"></div>' +
+    '<div class="fld"><label for="c-modelo">Modelo</label><input id="c-modelo" type="text" value="' + esc(v.modelo || '') + '"></div></div>' +
+    '<div class="fld"><label for="c-version">Versión</label><input id="c-version" type="text" value="' + esc(v.version || '') + '"></div>' +
+    '<div class="two"><div class="fld"><label for="c-mat">Matrícula</label><input id="c-mat" type="text" autocapitalize="characters" value="' + esc(v.matricula || '') + '" placeholder="0000 AAA"></div>' +
+    '<div class="fld"><label for="c-fecha">Primera matriculación</label><input id="c-fecha" type="date" value="' + esc(v.matric || '') + '"></div></div>' +
+    '<div class="two"><div class="fld"><label for="c-comb">Combustible</label><select id="c-comb">' + opts(COMBUSTIBLES, v.comb) + '</select></div>' +
+    '<div class="fld"><label for="c-dgt">Etiqueta DGT</label><select id="c-dgt">' + opts(ETIQUETAS, v.dgt) + '</select></div></div>' +
+    '<div class="two"><div class="fld"><label for="c-km">Kilómetros</label><input id="c-km" type="number" inputmode="numeric" min="0" value="' + (v.km != null ? v.km : '') + '"></div>' +
+    '<div class="fld"><label for="c-color">Color</label><select id="c-color">' + opts(COLORES.map(x => x[0]), v.color || 'Gris') + '</select></div></div>' +
+    '<p class="note danger" id="c-err" role="alert" style="margin-top:10px;display:none"></p>' +
+    '<div class="actions"><button class="btn" type="submit" data-t="Guardar">Guardar</button><button class="btn ghost" type="button" data-a="close">Cancelar</button></div></form>');
+}
+async function saveCar(f) {
+  const nombre = document.getElementById('c-nombre').value.trim();
+  if (!nombre) return formErr('c-err', 'Falta el nombre del coche.');
+  const id = f.dataset.id; const old = id ? cars.find(x => x.id === id) : null;
+  const kmv = document.getElementById('c-km').value;
+  const colorName = document.getElementById('c-color').value;
+  const comb = document.getElementById('c-comb').value;
+  const o = {
+    nombre, marca: document.getElementById('c-marca').value.trim() || null, modelo: document.getElementById('c-modelo').value.trim() || null,
+    version: document.getElementById('c-version').value.trim() || null, matricula: document.getElementById('c-mat').value.trim().toUpperCase() || null,
+    matriculacion: document.getElementById('c-fecha').value || null, combustible: comb,
+    etiqueta_dgt: document.getElementById('c-dgt').value, color: colorName, color_hex: (COLORES.find(x => x[0] === colorName) || [0, '#8b959e'])[1]
+  };
+  if (id) o.id = id; else o.plan = planFor(comb);
+  if (kmv !== '' && (!old || old.km !== +kmv)) { o.km = +kmv; o.km_fecha = iso(TODAY); }
+  if (kmv === '' && old && old.km != null) { o.km = null; o.km_fecha = null; }
+  busy(f, true);
+  const r = await api('guardar_coche', { p_coche: o });
+  if (!r.ok) { busy(f, false); return formErr('c-err', errMsg(r)); }
+  const rl = await reload();
+  if (!rl.ok) { busy(f, false); return formErr('c-err', errMsg(rl)); }
+  if (!id) { S.carId = r.coche.id; S.screen = 'car'; S.tab = 'proximo'; }
+  closeSheet(); render(!!id); toast(id ? 'Coche actualizado' : 'Coche añadido');
+}
+function carDelSheet() {
+  const c = car();
+  openSheet('Borrar coche',
+    '<p>¿Borrar <b>' + esc(c.nombre) + '</b>? Se borrarán también todos sus apuntes. No se puede deshacer.</p>' +
+    '<div class="actions"><button class="btn bad" data-a="car-del-yes">Sí, borrar</button><button class="btn ghost" data-a="close">Cancelar</button></div>');
+}
+
+/* ---- Importar desde foto (copiar prompts) ---- */
+const PROMPTS = {
+  factura: ['Factura de taller', 'Crea un apunte por cada línea de la factura.', 'Mira la foto de esta factura de taller y devuélveme SOLO un bloque CSV con separador punto y coma y esta cabecera: fecha;km;tipo;concepto;taller;coste. Fecha en AAAA-MM-DD; km y coste solo números (coste con IVA, decimales con punto); tipo: mantenimiento, reparacion, neumaticos, itv u otros; agrupa los trabajos en líneas cortas; si un dato no aparece, déjalo vacío. No añadas nada más.'],
+  ficha: ['Ficha técnica o permiso', 'Rellena el formulario del coche para que lo revises.', 'Mira la foto de esta ficha técnica (y/o permiso de circulación) y devuélveme SOLO líneas campo;valor con estos campos: matricula;marca;modelo;version;bastidor;fecha_matriculacion;combustible;potencia_cv;neumaticos. Fechas en AAAA-MM-DD. Combustible: Gasolina, Diésel, Híbrido, Híbrido enchufable, Microhíbrido, Eléctrico o GLP. Si un dato no aparece, déjalo vacío. No añadas nada más.'],
+  seguro: ['Seguro', 'Rellena los datos del seguro para que los revises.', 'Mira la foto de esta póliza o recibo de seguro y devuélveme SOLO líneas campo;valor con estos campos: compania;poliza;cobertura;fecha_vencimiento;prima_anual;telefono_asistencia. Fechas en AAAA-MM-DD, importes solo números con punto decimal. No añadas nada más.'],
+  itv: ['ITV', 'Crea un apunte con el resultado y los defectos.', 'Mira la foto de este informe de ITV y devuélveme SOLO líneas campo;valor con estos campos: fecha;km;resultado;estacion;defectos;importe. Fechas en AAAA-MM-DD, km e importe solo números. Resultado: Favorable, Favorable con defectos leves, Desfavorable o Negativa. No añadas nada más.']
+};
+function importSheet() {
+  openSheet('Importar foto',
+    '<p class="note">La app no lee fotos. Copias un prompt, lo pegas con la foto en ChatGPT o Claude, y luego pegarás aquí la respuesta (eso llega en la fase 4).</p>' +
+    Object.keys(PROMPTS).map(k => '<div class="docc"><b>' + PROMPTS[k][0] + '</b><p>' + PROMPTS[k][1] + '</p><button class="btn ghost" data-a="copy" data-k="' + k + '">Copiar prompt</button><div class="pp" id="pp-' + k + '"></div></div>').join(''));
+}
+
+/* ===== Acciones ===== */
+function goCar(delta) {
+  const i = cars.findIndex(c => c.id === S.carId);
+  S.carId = cars[(i + delta + cars.length) % cars.length].id;
+  S.anim = delta > 0 ? 'l' : 'r'; S.filter = 'todos';
+  render(true);
+}
+async function enter(pin, f) {
+  PIN = pin;
+  if (f) busy(f, true);
+  const r = await rpc('listar_datos', { p_pin: pin });
+  if (r.ok) {
+    try { localStorage.setItem('garaje-pin', pin); } catch (e) {}
+    cars = r.coches.map(fromDb); hist = r.apuntes.map(fromApunte);
+    S.screen = 'home'; S.msg = ''; render(); return;
+  }
+  PIN = '';
+  if (r.error === 'red' || r.error === 'servidor') { S.screen = 'error'; S.msg = errMsg(r); render(); return; }
+  forgetPin(); S.screen = 'pin'; S.msg = errMsg(r); render();
+}
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('[data-a]'); if (!t) return;
+  const a = t.dataset.a;
+  if (a === 'close-ov') { if (ev.target === t) closeSheet(); return; }
+  switch (a) {
+    case 'theme': { const n = effTheme() === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', n); try { localStorage.setItem('garaje-tema', n); } catch (e) {} render(true); break; }
+    case 'lock': forgetPin(); cars = []; hist = []; S.screen = 'pin'; S.msg = ''; render(); break;
+    case 'retry': S.screen = 'loading'; render(); boot(); break;
+    case 'open': S.screen = 'car'; S.carId = t.dataset.car; S.tab = 'proximo'; S.filter = 'todos'; render(); break;
+    case 'home': S.screen = 'home'; render(); break;
+    case 'tab': S.tab = t.dataset.tab; render(); break;
+    case 'prev': goCar(-1); break;
+    case 'next': goCar(1); break;
+    case 'filter': S.filter = t.dataset.f; render(true); break;
+    case 'soon': toast(t.dataset.m); break;
+    case 'plus': plusMenu(); break;
+    case 'close': closeSheet(); break;
+    case 'car-new': carForm(null); break;
+    case 'car-edit': carForm(car()); break;
+    case 'car-del': carDelSheet(); break;
+    case 'car-del-yes': {
+      t.disabled = true; t.textContent = 'Borrando…';
+      api('borrar_coche', { p_id: S.carId }).then(async r => {
+        if (!r.ok) { t.disabled = false; t.textContent = 'Sí, borrar'; toast(errMsg(r)); return; }
+        await reload(); closeSheet(); S.screen = 'home'; render(); toast('Coche borrado');
+      });
+      break;
+    }
+    case 'entry-new': entryForm(null, { tipo: 'mantenimiento' }); break;
+    case 'entry-from': entryFromItem(t.dataset.key); break;
+    case 'entry': entryDetail(t.dataset.id); break;
+    case 'entry-edit': entryForm(hist.find(h => h.id === t.dataset.id)); break;
+    case 'entry-del': document.getElementById('det-actions').innerHTML = '<p class="danger" style="font-weight:600">¿Borrar este apunte?</p><button class="btn bad" data-a="entry-del-yes" data-id="' + t.dataset.id + '">Sí, borrar</button><button class="btn ghost" data-a="close">Cancelar</button>'; break;
+    case 'entry-del-yes': {
+      t.disabled = true; t.textContent = 'Borrando…';
+      api('borrar_apunte', { p_id: t.dataset.id }).then(async r => {
+        if (!r.ok) { t.disabled = false; t.textContent = 'Sí, borrar'; toast(errMsg(r)); return; }
+        await reload(); closeSheet(); render(true); toast('Apunte borrado');
+      });
+      break;
+    }
+    case 'km': kmForm(); break;
+    case 'import': importSheet(); break;
+    case 'copy': {
+      const txt = PROMPTS[t.dataset.k][2]; const box = document.getElementById('pp-' + t.dataset.k);
+      const fallback = () => { box.innerHTML = '<textarea readonly aria-label="Prompt para copiar">' + esc(txt) + '</textarea>'; const ta = box.querySelector('textarea'); ta.focus(); ta.select(); toast('Mantén pulsado el texto para copiarlo'); };
+      try { navigator.clipboard.writeText(txt).then(() => toast('Prompt copiado'), fallback); } catch (e) { fallback(); }
+      break;
+    }
+  }
+});
+document.addEventListener('submit', ev => {
+  ev.preventDefault();
+  const f = ev.target;
+  if (f.id === 'f-pin') {
+    const pin = document.getElementById('p-pin').value.trim();
+    if (!/^[0-9]{4,8}$/.test(pin)) { S.msg = 'El PIN son de 4 a 8 números.'; formErr('p-err', S.msg); return; }
+    enter(pin, f);
+  }
+  if (f.id === 'f-entry') saveEntry(f);
+  if (f.id === 'f-km') saveKm(f);
+  if (f.id === 'f-car') saveCar(f);
+});
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape') closeSheet(); });
+
+/* Deslizar la foto para cambiar de coche */
+let sx = 0, sy = 0, swiping = false;
+document.addEventListener('touchstart', ev => {
+  swiping = !!ev.target.closest('[data-swipe]') && ev.touches.length === 1 && cars.length > 1;
+  if (swiping) { sx = ev.touches[0].clientX; sy = ev.touches[0].clientY; }
+}, { passive: true });
+document.addEventListener('touchend', ev => {
+  if (!swiping) return; swiping = false;
+  const dx = ev.changedTouches[0].clientX - sx, dy = ev.changedTouches[0].clientY - sy;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) goCar(dx < 0 ? 1 : -1);
+}, { passive: true });
+
+/* ===== Arranque ===== */
+try { const t = localStorage.getItem('garaje-tema'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+async function boot() {
+  let saved = '';
+  try { saved = localStorage.getItem('garaje-pin') || ''; } catch (e) {}
+  if (!saved) { S.screen = 'pin'; S.msg = ''; render(); return; }
+  S.screen = 'loading'; render();
+  await enter(saved, null);
+}
+boot();
+</script>
+</body>
+</html>
