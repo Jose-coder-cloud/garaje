@@ -246,6 +246,13 @@ svg.ic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-
 .fld input[type=range]{padding:0;min-height:36px;border:0;background:transparent}
 [hidden]{display:none!important}
 
+.hrow .clip{display:inline-flex;color:var(--ink2)}
+.hrow .clip svg{width:15px;height:15px}
+.fac-box .btn{min-height:46px}
+.fac-ok{display:flex;align-items:center;gap:6px;margin:0 0 8px;color:var(--ink)}
+.fac-ok svg{width:18px;height:18px;flex:none}
+.fac-img{display:block;width:100%;border-radius:12px;border:1px solid var(--line)}
+
 /* Pantallas nuevas de la versión real */
 .pinwrap{display:flex;flex-direction:column;gap:6px;padding-top:12vh}
 .lead{color:var(--ink2);margin:4px 0 6px}
@@ -340,7 +347,7 @@ const fromDb = c => ({
 });
 const fromApunte = a => ({
   id: a.id, carId: a.coche_id, fecha: a.fecha, km: a.km, tipo: a.tipo, que: a.que, taller: a.taller || '',
-  coste: a.coste != null ? +a.coste : null, plan: a.plan || '', notas: a.notas || ''
+  coste: a.coste != null ? +a.coste : null, plan: a.plan || '', notas: a.notas || '', factura: a.factura || ''
 });
 
 /* ===== Cálculo de vencimientos ===== */
@@ -512,6 +519,7 @@ const IC = {
   moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
   camera: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  clip: '<path d="M20 11.5l-8 8a5 5 0 0 1-7-7l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7L9.5 17.2a1.7 1.7 0 0 1-2.4-2.4L15 7"/>',
   gauge: '<path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/>',
   wrench: '<path d="M14.5 6.5a4 4 0 0 0-5 5L4 17l3 3 5.5-5.5a4 4 0 0 0 5-5l-2.5 2.5-2.5-.5-.5-2.5z"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
@@ -648,7 +656,7 @@ function tabHistorial(c) {
           const d = pd(x.fecha);
           return '<button class="hrow" data-a="entry" data-id="' + x.id + '"><span class="dt num">' + d.getDate() + '<br>' + MESES[d.getMonth()] + '</span>' +
             '<span><span class="tx">' + esc(x.que) + '</span><span class="mt"><span class="sw ' + x.tipo + '"></span>' + esc(TIPO_NAME[x.tipo] || x.tipo) +
-            (x.km != null ? ' · ' + fmt(x.km) + ' km' : '') + (x.taller ? ' · ' + esc(x.taller) : '') + '</span></span>' +
+            (x.km != null ? ' · ' + fmt(x.km) + ' km' : '') + (x.taller ? ' · ' + esc(x.taller) : '') + (x.factura ? '<span class="clip" aria-label="Con factura">' + ic('clip') + '</span>' : '') + '</span></span>' +
             '<span class="eu num">' + (x.coste ? eur(x.coste) : '') + '</span></button>';
         }).join('') + '</div>';
     }).join('');
@@ -777,9 +785,11 @@ function entryForm(e, pre) {
     '<div class="two"><div class="fld"><label for="e-taller">Taller</label><input id="e-taller" type="text" value="' + esc(v.taller || '') + '"></div>' +
     '<div class="fld"><label for="e-coste">Coste (€)</label><input id="e-coste" type="number" inputmode="decimal" step="0.01" min="0" value="' + (v.coste != null ? v.coste : '') + '"></div></div>' +
     '<div class="fld"><label for="e-notas">Notas</label><textarea id="e-notas">' + esc(v.notas || '') + '</textarea></div>' +
+    '<div class="fld"><label>Factura o recibo (opcional)</label><div id="fac-box" class="fac-box"></div><input id="fac-file" type="file" accept="image/*,application/pdf" hidden></div>' +
     '<p class="note" id="e-hint" style="margin-top:10px;display:none">Al guardar una renovación, el vencimiento del seguro salta un año solo.</p>' +
     '<p class="note danger" id="e-err" role="alert" style="margin-top:10px;display:none"></p>' +
     '<div class="actions"><button class="btn" type="submit" data-t="Guardar">Guardar</button><button class="btn ghost" type="button" data-a="close">Cancelar</button></div></form>');
+  FAC.pending = undefined; FAC.cur = e ? (e.factura || '') : ''; FAC.id = e ? e.id : ''; facRefresh();
   const hint = () => { document.getElementById('e-hint').style.display = !e && document.getElementById('e-tipo').value === 'seguro' && c.seguro && c.seguro.vence ? 'block' : 'none'; };
   document.getElementById('e-tipo').addEventListener('change', hint); hint();
 }
@@ -797,7 +807,62 @@ function entryDetail(id) {
   openSheet('Apunte',
     kv('Fecha', fdate(pd(x.fecha))) + kv('Tipo', TIPO_NAME[x.tipo]) + kv('Qué se hizo', x.que) + kv('Kilómetros', x.km != null ? fmt(x.km) + ' km' : '') +
     kv('Taller', x.taller) + kv('Coste', x.coste ? eur(x.coste) : '') + kv('Cumple del plan', plan) + kv('Notas', x.notas) +
+    (x.factura ? '<button class="btn ghost" data-a="fac-view" data-id="' + x.id + '" style="margin-top:12px">' + ic('clip') + 'Ver factura (' + (x.factura === 'application/pdf' ? 'PDF' : 'foto') + ')</button>' : '') +
     '<div class="actions" id="det-actions"><button class="btn" data-a="entry-edit" data-id="' + x.id + '">Editar</button><button class="btn ghost danger" data-a="entry-del" data-id="' + x.id + '">Borrar</button></div>');
+}
+/* ---- Facturas: foto reducida o PDF pequeño ---- */
+const FAC = { pending: undefined, cur: '', id: '' };
+const FAC_PX = 1600, FAC_IMG_MAX = 380000, FAC_PDF_MAX = 1100000;
+function facRefresh() {
+  const b = document.getElementById('fac-box'); if (!b) return;
+  const mime = FAC.pending === null ? '' : FAC.pending ? FAC.pending.mime : FAC.cur;
+  if (!mime) { b.innerHTML = '<button class="btn ghost" type="button" data-a="fac-pick">' + ic('clip') + 'Adjuntar foto o PDF</button>'; return; }
+  const kind = mime === 'application/pdf' ? 'PDF' : 'foto';
+  const ver = FAC.pending === undefined && FAC.id ? '<button class="btn ghost" type="button" data-a="fac-view" data-id="' + FAC.id + '">Ver</button>' : '';
+  b.innerHTML = '<p class="note fac-ok">' + ic('clip') + (FAC.pending ? 'Se adjuntará ' + (kind === 'PDF' ? 'este PDF' : 'esta foto') + ' al guardar' : 'Factura adjunta (' + kind + ')') + '</p>' +
+    '<div class="two">' + ver + '<button class="btn ghost" type="button" data-a="fac-pick">Cambiar</button>' + (ver ? '' : '<span></span>') + '</div>' +
+    '<button class="btn ghost danger" type="button" data-a="fac-del" style="margin-top:8px">Quitar factura</button>';
+}
+function facFile(file) {
+  if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
+    if (file.size > FAC_PDF_MAX) { toast('Ese PDF pesa ' + (file.size / 1048576).toFixed(1).replace('.', ',') + ' MB. El máximo son 1 MB. Haz una foto de la factura en su lugar.'); return; }
+    const fr = new FileReader();
+    fr.onload = () => { FAC.pending = { mime: 'application/pdf', datos: fr.result }; facRefresh(); };
+    fr.onerror = () => toast('No he podido leer ese PDF.');
+    fr.readAsDataURL(file); return;
+  }
+  const url = URL.createObjectURL(file), im = new Image();
+  im.onload = () => {
+    URL.revokeObjectURL(url);
+    let k = Math.min(1, FAC_PX / Math.max(im.naturalWidth, im.naturalHeight)), out = '';
+    for (let tries = 0; tries < 6; tries++) {
+      const cv = document.createElement('canvas'); cv.width = Math.round(im.naturalWidth * k); cv.height = Math.round(im.naturalHeight * k);
+      const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height); g.imageSmoothingQuality = 'high'; g.drawImage(im, 0, 0, cv.width, cv.height);
+      for (let q = 0.8; q >= 0.45; q -= 0.1) { out = cv.toDataURL('image/jpeg', q); if (out.length <= FAC_IMG_MAX) break; }
+      if (out.length <= FAC_IMG_MAX) break; k *= 0.8;
+    }
+    FAC.pending = { mime: 'image/jpeg', datos: out }; facRefresh();
+  };
+  im.onerror = () => { URL.revokeObjectURL(url); toast('No he podido abrir esa foto. Prueba con otra.'); };
+  im.src = url;
+}
+document.addEventListener('change', ev => {
+  const t = ev.target;
+  if (t.id === 'fac-file' && t.files && t.files[0]) { const f = t.files[0]; t.value = ''; facFile(f); }
+});
+let facUrl = '';
+async function facView(id) {
+  openSheet('Factura', '<p class="note">Cargando la factura…</p>');
+  const r = await api('obtener_factura', { p_apunte_id: id });
+  if (S.screen === 'pin') return;
+  const back = '<div class="actions"><button class="btn ghost" data-a="entry" data-id="' + id + '">Volver al apunte</button></div>';
+  if (!r.ok || !r.datos) return openSheet('Factura', '<p class="note danger">' + (r.ok ? 'No hay factura guardada en este apunte.' : esc(errMsg(r))) + '</p>' + back);
+  if (r.mime === 'application/pdf') {
+    if (facUrl) URL.revokeObjectURL(facUrl);
+    const bin = atob(r.datos.split(',')[1] || ''); const u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    facUrl = URL.createObjectURL(new Blob([u8], { type: 'application/pdf' }));
+    openSheet('Factura', '<a class="btn" href="' + facUrl + '" target="_blank" rel="noopener">Abrir el PDF</a>' + back);
+  } else openSheet('Factura', '<img class="fac-img" alt="Foto de la factura" src="' + r.datos + '">' + back);
 }
 async function saveEntry(f) {
   const err = 'e-err';
@@ -814,6 +879,14 @@ async function saveEntry(f) {
   const r = await api('guardar_apunte', { p_apunte: o });
   if (!r.ok) { busy(f, false); return formErr(err, errMsg(r)); }
   const c = car(); let msg = 'Apunte guardado';
+  if (FAC.pending !== undefined) {
+    const aid = id || (r.apunte && r.apunte.id);
+    if (!aid) msg += ', pero no se pudo adjuntar la factura';
+    else if (FAC.pending === null) { if (FAC.cur) { const rf = await api('borrar_factura', { p_apunte_id: aid }); if (!rf.ok) msg += ', pero no se pudo quitar la factura'; } }
+    else { const rf = await api('guardar_factura', { p_apunte_id: aid, p_mime: FAC.pending.mime, p_datos: FAC.pending.datos }); msg += rf.ok ? ' con su factura' : ', pero la factura no se pudo guardar'; }
+    if (S.screen === 'pin') return;
+  }
+  FAC.pending = undefined;
   if (!id && o.tipo === 'seguro' && c.seguro && c.seguro.vence) {
     const nv = iso(addMonths(pd(c.seguro.vence), 12));
     const r2 = await api('guardar_coche', { p_coche: { id: c.id, seguro: Object.assign({}, c.seguro, { vence: nv }) } });
@@ -1169,6 +1242,9 @@ document.addEventListener('click', ev => {
       break;
     }
     case 'km': kmForm(); break;
+    case 'fac-pick': { const i = document.getElementById('fac-file'); if (i) i.click(); break; }
+    case 'fac-del': FAC.pending = null; facRefresh(); break;
+    case 'fac-view': facView(t.dataset.id); break;
     case 'ph-pick': { const i = document.getElementById('ph-file'); if (i) i.click(); break; }
     case 'ph-del': FOTO.pending = null; fotoShow(''); { const b = document.querySelector('[data-a="ph-pick"]'); if (b) b.textContent = 'Elegir foto'; } break;
     case 'ph-ok': fotoDone(); { const b = document.querySelector('[data-a="ph-pick"]'); if (b) b.textContent = 'Cambiar foto'; } break;
