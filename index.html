@@ -237,6 +237,9 @@ svg.ic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-
 .center{text-align:center;color:var(--ink2);padding:70px 0}
 .errbox{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--red);border-radius:14px;padding:14px 16px;margin:18px 0}
 .dgt.dS{background:#8a949c;font-size:14px}
+.prow{border:1px solid var(--line);border-radius:14px;padding:4px 12px 12px;margin-top:12px;background:var(--bg)}
+.prow label{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weight:600;color:var(--ink2);margin-top:10px}
+.prow input{font:inherit;font-size:16px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;width:100%;min-height:48px}
 .warn{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:12px 14px;color:var(--ink2);font-size:15px}
 </style>
 </head>
@@ -611,7 +614,7 @@ function tabProximo(c, items) {
     '</span><span class="hint">' + hint + '</span></button>' +
     (tel ? '<a class="call" href="tel:' + esc(tel.replace(/\s/g, '')) + '">' + ic('phone') +
       '<span><b>Asistencia en carretera</b><small>' + esc(c.seguro.cia || 'Seguro') + ' · ' + esc(tel) + '</small></span></a>'
-      : '<div class="warn">Aún no hay teléfono de asistencia en carretera. Se añade con los datos del seguro (fase 3).</div>') +
+      : '<div class="warn">Aún no hay teléfono de asistencia en carretera. Añádelo en Ficha → Seguro → Editar.</div>') +
     items.map(vcard).join('');
 }
 function tabHistorial(c) {
@@ -674,13 +677,13 @@ function tabFicha(c, items) {
   return block('Datos del coche', [['Marca y modelo', (c.marca + ' ' + c.modelo).trim()], ['Versión', c.version], ['Matrícula', c.matricula],
     ['Primera matriculación', c.matric ? fdate(pd(c.matric)) : ''], ['Combustible', c.comb], ['Etiqueta DGT', DGT_TXT[c.dgt]], ['Potencia', c.cv ? c.cv + ' CV' : ''], ['Color', c.color], ['Bastidor', c.bastidor],
     ['Kilómetros', c.km != null ? fmt(c.km) + ' km' + (c.kmDate ? ' (' + fdate(pd(c.kmDate)) + ')' : '') : '']], 'car-edit') +
-    block('Seguro', [['Compañía', s.cia], ['Póliza', s.poliza], ['Cobertura', s.cob], ['Vence', s.vence ? fdate(pd(s.vence)) : ''], ['Prima', s.prima != null ? eur(s.prima) : ''], ['Asistencia', s.tel]]) +
+    block('Seguro', [['Compañía', s.cia], ['Póliza', s.poliza], ['Cobertura', s.cob], ['Vence', s.vence ? fdate(pd(s.vence)) : ''], ['Prima', s.prima != null ? eur(s.prima) : ''], ['Asistencia', s.tel]], 'ed-seguro') +
     block('ITV e impuesto', [['Última ITV', itvs.length ? fdate(pd(itvs[0].fecha)) : 'Sin dato'], ['Próxima ITV', itv && itv.due ? fdate(itv.due) : 'Sin dato'],
       ['Impuesto', c.imp && c.imp.dia ? c.imp.dia + ' de ' + MESES_L[c.imp.mes - 1] + (c.imp.importe != null ? ' · ' + eur(c.imp.importe) : '') : ''],
-      ['Próximo pago', imp && imp.due ? fdate(imp.due) : '']]) +
-    block('Neumáticos', [['Medida', n.medida], ['Presiones', n.pres]]) +
-    block('Plan de mantenimiento', c.plan.map(p => [p.n, p.m + ' meses' + (p.km ? ' o ' + fmt(p.km) + ' km' : '')])) +
-    block('Taller y garantía', [['Taller', t.n], ['Teléfono', t.tel], ['Garantía hasta', g.hasta ? fdate(pd(g.hasta)) : 'Sin garantía'], ['Nota', g.nota]]) +
+      ['Próximo pago', imp && imp.due ? fdate(imp.due) : '']], 'ed-itv') +
+    block('Neumáticos', [['Medida', n.medida], ['Presiones', n.pres]], 'ed-neum') +
+    block('Plan de mantenimiento', c.plan.map(p => [p.n, p.m + ' meses' + (p.km ? ' o ' + fmt(p.km) + ' km' : '')]), 'ed-plan') +
+    block('Taller y garantía', [['Taller', t.n], ['Teléfono', t.tel], ['Garantía hasta', g.hasta ? fdate(pd(g.hasta)) : 'Sin garantía'], ['Nota', g.nota]], 'ed-taller') +
     '<button class="btn" data-a="soon" data-m="El enlace de solo lectura llega en la fase 5.">Compartir enlace de solo lectura</button>' +
     '<button class="btn ghost danger" data-a="car-del">Borrar este coche</button>';
 }
@@ -839,6 +842,9 @@ function carForm(c) {
     '<div class="fld"><label for="c-fecha">Primera matriculación</label><input id="c-fecha" type="date" value="' + esc(v.matric || '') + '"></div></div>' +
     '<div class="two"><div class="fld"><label for="c-comb">Combustible</label><select id="c-comb">' + opts(COMBUSTIBLES, v.comb) + '</select></div>' +
     '<div class="fld"><label for="c-dgt">Etiqueta DGT</label><select id="c-dgt">' + opts(ETIQUETAS, v.dgt) + '</select></div></div>' +
+    '<div class="two"><div class="fld"><label for="c-cv">Potencia (CV)</label><input id="c-cv" type="number" inputmode="numeric" min="1" value="' + (v.cv != null ? v.cv : '') + '"></div>' +
+    '<div class="fld"><label for="c-kmy">Km al año (opcional)</label><input id="c-kmy" type="number" inputmode="numeric" min="1" value="' + (v.kmYear != null ? v.kmYear : '') + '"></div></div>' +
+    '<div class="fld"><label for="c-bast">Bastidor</label><input id="c-bast" type="text" autocapitalize="characters" value="' + esc(v.bastidor || '') + '"></div>' +
     '<div class="two"><div class="fld"><label for="c-km">Kilómetros</label><input id="c-km" type="number" inputmode="numeric" min="0" value="' + (v.km != null ? v.km : '') + '"></div>' +
     '<div class="fld"><label for="c-color">Color</label><select id="c-color">' + opts(COLORES.map(x => x[0]), v.color || 'Gris') + '</select></div></div>' +
     '<p class="note danger" id="c-err" role="alert" style="margin-top:10px;display:none"></p>' +
@@ -857,6 +863,7 @@ async function saveCar(f) {
     matriculacion: document.getElementById('c-fecha').value || null, combustible: comb,
     etiqueta_dgt: document.getElementById('c-dgt').value, color: colorName, color_hex: (COLORES.find(x => x[0] === colorName) || [0, '#8b959e'])[1]
   };
+  o.potencia_cv = numOrNull(val('c-cv')); o.km_anual = numOrNull(val('c-kmy')); o.bastidor = val('c-bast').toUpperCase() || null;
   if (id) o.id = id; else o.plan = planFor(comb);
   if (kmv !== '' && (!old || old.km !== +kmv)) { o.km = +kmv; o.km_fecha = iso(TODAY); }
   if (kmv === '' && old && old.km != null) { o.km = null; o.km_fecha = null; }
@@ -873,6 +880,104 @@ function carDelSheet() {
   openSheet('Borrar coche',
     '<p>¿Borrar <b>' + esc(c.nombre) + '</b>? Se borrarán también todos sus apuntes. No se puede deshacer.</p>' +
     '<div class="actions"><button class="btn bad" data-a="car-del-yes">Sí, borrar</button><button class="btn ghost" data-a="close">Cancelar</button></div>');
+}
+
+/* ---- Bloques de la ficha ---- */
+const val = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
+const numOrNull = x => (x === '' || x == null ? null : +x);
+function clean(o) { const r = {}; Object.keys(o).forEach(k => { if (o[k] !== '' && o[k] != null) r[k] = o[k]; }); return r; }
+const fld = (id, label, value, type, extra) => '<div class="fld"><label for="' + id + '">' + label + '</label><input id="' + id + '" type="' + (type || 'text') + '" value="' + esc(value == null ? '' : value) + '" ' + (extra || '') + '></div>';
+function blockSheet(kind, title, body) {
+  openSheet(title, '<form id="f-block" data-kind="' + kind + '" novalidate>' + body +
+    '<p class="note danger" id="b-err" role="alert" style="margin-top:10px;display:none"></p>' +
+    '<div class="actions"><button class="btn" type="submit" data-t="Guardar">Guardar</button><button class="btn ghost" type="button" data-a="close">Cancelar</button></div></form>');
+}
+function seguroForm() {
+  const s = car().seguro || {};
+  blockSheet('seguro', 'Seguro',
+    fld('s-cia', 'Compañía', s.cia) + fld('s-poliza', 'Póliza', s.poliza) +
+    fld('s-cob', 'Cobertura', s.cob, 'text', 'placeholder="Por ejemplo: todo riesgo con franquicia"') +
+    '<div class="two">' + fld('s-vence', 'Vencimiento', s.vence, 'date') + fld('s-prima', 'Prima anual (€)', s.prima, 'number', 'inputmode="decimal" step="0.01" min="0"') + '</div>' +
+    fld('s-tel', 'Teléfono de asistencia', s.tel, 'tel', 'inputmode="tel"'));
+}
+function itvForm() {
+  const c = car(); const im = c.imp || {};
+  const mesOpts = '<option value="">—</option>' + MESES_L.map((m, i) => '<option value="' + (i + 1) + '"' + (im.mes === i + 1 ? ' selected' : '') + '>' + m + '</option>').join('');
+  blockSheet('itv', 'ITV e impuesto',
+    '<p class="note">Si ya apuntaste la ITV en el historial, no hace falta rellenar la última ITV.</p>' +
+    fld('i-ultima', 'Última ITV', c.ultimaItv, 'date') +
+    '<h3 class="sub2" style="margin-top:16px">Impuesto de circulación</h3>' +
+    '<div class="two"><div class="fld"><label for="i-mes">Mes</label><select id="i-mes">' + mesOpts + '</select></div>' + fld('i-dia', 'Día', im.dia, 'number', 'inputmode="numeric" min="1" max="31"') + '</div>' +
+    fld('i-importe', 'Importe (€)', im.importe, 'number', 'inputmode="decimal" step="0.01" min="0"'));
+}
+function neumForm() {
+  const n = car().neum || {};
+  blockSheet('neum', 'Neumáticos', fld('n-medida', 'Medida', n.medida, 'text', 'placeholder="Por ejemplo: 205/55 R16"') + fld('n-pres', 'Presiones', n.pres, 'text', 'placeholder="Por ejemplo: delanteras 2,3 · traseras 2,3 bar"'));
+}
+function tallerForm() {
+  const c = car(); const t = c.taller || {}, g = c.gar || {};
+  blockSheet('taller', 'Taller y garantía',
+    fld('t-nombre', 'Taller', t.n) + fld('t-tel', 'Teléfono del taller', t.tel, 'tel', 'inputmode="tel"') +
+    '<h3 class="sub2" style="margin-top:16px">Garantía</h3>' + fld('g-hasta', 'Garantía hasta', g.hasta, 'date') + fld('g-nota', 'Nota', g.nota));
+}
+async function saveBlock(f) {
+  const k = f.dataset.kind; const o = { id: S.carId };
+  if (k === 'seguro') {
+    o.seguro = clean({ cia: val('s-cia'), poliza: val('s-poliza'), cob: val('s-cob'), vence: val('s-vence'), prima: numOrNull(val('s-prima')), tel: val('s-tel') });
+  } else if (k === 'itv') {
+    const mes = val('i-mes'), dia = val('i-dia');
+    if ((mes && !dia) || (!mes && dia)) return formErr('b-err', 'Para el impuesto hacen falta el mes y el día.');
+    if (mes && (+dia < 1 || +dia > new Date(2024, +mes, 0).getDate())) return formErr('b-err', 'Ese día no existe en ese mes.');
+    o.ultima_itv = val('i-ultima') || null;
+    o.impuesto = mes ? clean({ mes: +mes, dia: +dia, importe: numOrNull(val('i-importe')) }) : {};
+  } else if (k === 'neum') {
+    o.neumaticos = clean({ medida: val('n-medida'), pres: val('n-pres') });
+  } else if (k === 'taller') {
+    o.taller = clean({ n: val('t-nombre'), tel: val('t-tel') });
+    o.garantia = clean({ hasta: val('g-hasta'), nota: val('g-nota') });
+  }
+  busy(f, true);
+  const r = await api('guardar_coche', { p_coche: o });
+  if (!r.ok) { busy(f, false); return formErr('b-err', errMsg(r)); }
+  const rl = await reload();
+  if (!rl.ok) { busy(f, false); return formErr('b-err', errMsg(rl)); }
+  closeSheet(); render(true); toast('Guardado');
+}
+/* ---- Plan de mantenimiento editable ---- */
+function planRowHtml(t) {
+  return '<div class="prow"><label>Tarea<input class="p-n" type="text" value="' + esc(t.n || '') + '" data-id="' + esc(t.id || '') + '"></label>' +
+    '<div class="two"><label>Cada (meses)<input class="p-m" type="number" inputmode="numeric" min="1" value="' + (t.m || '') + '"></label>' +
+    '<label>O cada (km), opcional<input class="p-k" type="number" inputmode="numeric" min="1" value="' + (t.km || '') + '"></label></div>' +
+    '<button type="button" class="btn ghost danger" data-a="plan-del" style="min-height:42px;margin-top:12px">Quitar tarea</button></div>';
+}
+function planForm() {
+  const c = car();
+  openSheet('Plan de mantenimiento',
+    '<form id="f-plan" novalidate><p class="note">Cada tarea vence por tiempo o por km, lo que llegue antes, contando desde la última vez que se hizo.</p>' +
+    '<div id="plan-rows">' + c.plan.map(planRowHtml).join('') + '</div>' +
+    '<div class="actions"><button type="button" class="btn ghost" data-a="plan-add">Añadir tarea</button>' +
+    '<button type="button" class="btn ghost" data-a="plan-reset">Restaurar la plantilla de ' + esc(c.comb === 'Eléctrico' ? 'eléctricos' : 'coches no eléctricos') + '</button></div>' +
+    '<p class="note danger" id="pl-err" role="alert" style="margin-top:10px;display:none"></p>' +
+    '<div class="actions"><button class="btn" type="submit" data-t="Guardar">Guardar</button><button class="btn ghost" type="button" data-a="close">Cancelar</button></div></form>');
+}
+async function savePlan(f) {
+  const plan = [];
+  const rows = Array.from(f.querySelectorAll('.prow'));
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    const n = r.querySelector('.p-n').value.trim(), m = r.querySelector('.p-m').value, k = r.querySelector('.p-k').value;
+    if (!n) return formErr('pl-err', 'Cada tarea necesita un nombre.');
+    if (!m || +m < 1) return formErr('pl-err', '«' + n + '» necesita los meses (1 o más).');
+    const t = { id: r.querySelector('.p-n').dataset.id || ('t' + Date.now().toString(36) + i), n, m: +m };
+    if (k && +k > 0) t.km = +k;
+    plan.push(t);
+  }
+  busy(f, true);
+  const r = await api('guardar_coche', { p_coche: { id: S.carId, plan } });
+  if (!r.ok) { busy(f, false); return formErr('pl-err', errMsg(r)); }
+  const rl = await reload();
+  if (!rl.ok) { busy(f, false); return formErr('pl-err', errMsg(rl)); }
+  closeSheet(); render(true); toast('Plan guardado');
 }
 
 /* ---- Importar desde foto (copiar prompts) ---- */
@@ -925,6 +1030,14 @@ document.addEventListener('click', ev => {
     case 'soon': toast(t.dataset.m); break;
     case 'plus': plusMenu(); break;
     case 'close': closeSheet(); break;
+    case 'ed-seguro': seguroForm(); break;
+    case 'ed-itv': itvForm(); break;
+    case 'ed-neum': neumForm(); break;
+    case 'ed-taller': tallerForm(); break;
+    case 'ed-plan': planForm(); break;
+    case 'plan-add': document.getElementById('plan-rows').insertAdjacentHTML('beforeend', planRowHtml({})); break;
+    case 'plan-del': t.closest('.prow').remove(); break;
+    case 'plan-reset': document.getElementById('plan-rows').innerHTML = planFor(car().comb).map(planRowHtml).join(''); break;
     case 'car-new': carForm(null); break;
     case 'car-edit': carForm(car()); break;
     case 'car-del': carDelSheet(); break;
@@ -970,6 +1083,8 @@ document.addEventListener('submit', ev => {
   if (f.id === 'f-entry') saveEntry(f);
   if (f.id === 'f-km') saveKm(f);
   if (f.id === 'f-car') saveCar(f);
+  if (f.id === 'f-block') saveBlock(f);
+  if (f.id === 'f-plan') savePlan(f);
 });
 document.addEventListener('keydown', ev => { if (ev.key === 'Escape') closeSheet(); });
 
