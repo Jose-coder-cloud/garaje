@@ -230,6 +230,22 @@ svg.ic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-
 .toast.show{opacity:1;transform:translate(-50%,0)}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 
+.ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;-webkit-user-drag:none}
+.stage.has-ph::after{display:none}
+.stage.has-ph .nav{background:rgba(0,0,0,.42);border-radius:12px;color:#fff}
+.stage.has-ph .dots{filter:drop-shadow(0 0 3px rgba(0,0,0,.8))}
+.photo-row{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center}
+.photo-prev{width:96px;height:96px;border-radius:14px;background:var(--asphalt);border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;color:#cfd6dc}
+.photo-prev img{width:100%;height:100%;object-fit:cover}
+.photo-prev svg{width:34px;height:34px}
+.photo-btns{display:flex;flex-direction:column;gap:8px}
+.photo-btns .btn{min-height:44px}
+.crop{position:relative;width:100%;max-width:340px;aspect-ratio:1;margin:0 auto;background:#000;border-radius:14px;overflow:hidden;touch-action:none;cursor:grab}
+.crop img{position:absolute;left:0;top:0;max-width:none;transform-origin:0 0;user-select:none;-webkit-user-drag:none;will-change:transform}
+.crop-guide{position:absolute;left:0;right:0;top:50%;aspect-ratio:350/206;transform:translateY(-50%);border-top:2px dashed var(--yellow);border-bottom:2px dashed var(--yellow);pointer-events:none;box-shadow:0 0 0 999px rgba(0,0,0,.28)}
+.fld input[type=range]{padding:0;min-height:36px;border:0;background:transparent}
+[hidden]{display:none!important}
+
 /* Pantallas nuevas de la versión real */
 .pinwrap{display:flex;flex-direction:column;gap:6px;padding-top:12vh}
 .lead{color:var(--ink2);margin:4px 0 6px}
@@ -317,7 +333,7 @@ let hist = [];
 const fromDb = c => ({
   id: c.id, nombre: c.nombre, marca: c.marca || '', modelo: c.modelo || '', version: c.version || '', matricula: c.matricula || '',
   matric: c.matriculacion || null, comb: c.combustible || 'Gasolina', dgt: c.etiqueta_dgt || 'Sin etiqueta', cv: c.potencia_cv,
-  bastidor: c.bastidor || '', color: c.color || '', hex: c.color_hex || '#8b959e',
+  bastidor: c.bastidor || '', color: c.color || '', hex: c.color_hex || '#8b959e', foto: c.foto || '',
   km: c.km, kmDate: c.km_fecha, kmYear: c.km_anual, ultimaItv: c.ultima_itv,
   seguro: c.seguro || {}, imp: c.impuesto || {}, neum: c.neumaticos || {}, taller: c.taller || {}, gar: c.garantia || {},
   plan: c.plan && c.plan.length ? c.plan : planFor(c.combustible)
@@ -566,7 +582,7 @@ function viewHome() {
       : n.s ? '<span class="badge amber" aria-label="' + n.s + ' pronto">' + n.s + '</span>'
       : '<span class="badge green" aria-label="Al día">' + ic('check') + '</span>';
     return '<button class="cc" data-a="open" data-car="' + c.id + '" aria-label="' + esc(c.nombre) + '">' +
-      '<div class="win">' + carSvg(c.hex) + b + '</div>' +
+      '<div class="win">' + (c.foto ? '<img class="ph" alt="" src="' + c.foto + '">' : carSvg(c.hex)) + b + '</div>' +
       '<div class="info"><span class="nm">' + esc(c.nombre) + '</span><span class="pl">' + esc(c.matricula) + '</span></div></button>';
   }).join('');
   all.sort((a, b) => a.i.urg - b.i.urg);
@@ -697,8 +713,8 @@ function viewCar() {
   const bar = tabs.map(t => t ? '<button class="t ' + (S.tab === t[0] ? 'on' : '') + '" data-a="tab" data-tab="' + t[0] + '" ' + (S.tab === t[0] ? 'aria-current="page"' : '') + '>' + ic(t[2]) + '<span>' + t[1] + '</span></button>' : '<span></span>').join('');
   const sub = (c.marca + ' ' + c.modelo + ' ' + c.version).trim();
   return '<div class="top"><button class="backbtn" data-a="home">' + ic('back') + 'Garaje</button>' + themeBtn() + '</div>' +
-    '<div class="stage ' + (S.anim ? 'slide-' + S.anim : '') + '" data-swipe>' +
-    (cars.length > 1 ? '<button class="nav l" data-a="prev" aria-label="Coche anterior">' + ic('back') + '</button>' : '') + carSvg(c.hex, 'car') +
+    '<div class="stage ' + (c.foto ? 'has-ph ' : '') + (S.anim ? 'slide-' + S.anim : '') + '" data-swipe>' + (c.foto ? '<img class="ph" alt="Foto de ' + esc(c.nombre) + '" src="' + c.foto + '">' : '') +
+    (cars.length > 1 ? '<button class="nav l" data-a="prev" aria-label="Coche anterior">' + ic('back') + '</button>' : '') + (c.foto ? '' : carSvg(c.hex, 'car')) +
     (cars.length > 1 ? '<button class="nav r" data-a="next" aria-label="Coche siguiente">' + ic('back') + '</button><div class="dots" aria-hidden="true">' + dots + '</div>' : '') + '</div>' +
     '<div class="ident"><h1>' + esc(c.nombre) + '</h1>' + (sub ? '<p class="sub">' + esc(sub) + '</p>' : '') +
     '<div class="tags">' + plate(c) + dgtLabel(c) + '<span class="dgtname">' + esc(c.comb) + ' · ' + esc(DGT_TXT[c.dgt]) + '</span></div></div>' +
@@ -834,6 +850,8 @@ function carForm(c) {
   const v = c || { comb: 'Gasolina', dgt: 'C' };
   openSheet(c ? 'Editar coche' : 'Añadir coche',
     '<form id="f-car" data-id="' + (c ? c.id : '') + '" novalidate>' +
+    '<div id="c-crop" hidden></div><div id="c-main">' +
+    fotoField(v.foto) +
     '<div class="fld"><label for="c-nombre">Nombre corto</label><input id="c-nombre" type="text" required value="' + esc(v.nombre || '') + '" placeholder="Por ejemplo: Ibiza"></div>' +
     '<div class="two"><div class="fld"><label for="c-marca">Marca</label><input id="c-marca" type="text" value="' + esc(v.marca || '') + '"></div>' +
     '<div class="fld"><label for="c-modelo">Modelo</label><input id="c-modelo" type="text" value="' + esc(v.modelo || '') + '"></div></div>' +
@@ -848,8 +866,91 @@ function carForm(c) {
     '<div class="two"><div class="fld"><label for="c-km">Kilómetros</label><input id="c-km" type="number" inputmode="numeric" min="0" value="' + (v.km != null ? v.km : '') + '"></div>' +
     '<div class="fld"><label for="c-color">Color</label><select id="c-color">' + opts(COLORES.map(x => x[0]), v.color || 'Gris') + '</select></div></div>' +
     '<p class="note danger" id="c-err" role="alert" style="margin-top:10px;display:none"></p>' +
-    '<div class="actions"><button class="btn" type="submit" data-t="Guardar">Guardar</button><button class="btn ghost" type="button" data-a="close">Cancelar</button></div></form>');
+    '<div class="actions"><button class="btn" type="submit" data-t="Guardar">Guardar</button><button class="btn ghost" type="button" data-a="close">Cancelar</button></div></div></form>');
+  FOTO.pending = undefined;
 }
+
+/* ---- Foto del coche: elegir, recortar en cuadrado y reducir ---- */
+const FOTO = { pending: undefined, img: null, z: 1, x: 0, y: 0, B: 300, ptrs: new Map(), d0: 0, z0: 1 };
+const FOTO_PX = 640;
+function fotoField(cur) {
+  return '<div class="fld"><label>Foto</label><div class="photo-row">' +
+    '<div class="photo-prev" id="ph-prev">' + (cur ? '<img alt="" src="' + cur + '">' : ic('camera')) + '</div>' +
+    '<div class="photo-btns"><button class="btn ghost" type="button" data-a="ph-pick">' + (cur ? 'Cambiar foto' : 'Elegir foto') + '</button>' +
+    '<button class="btn ghost danger" type="button" data-a="ph-del" id="ph-del"' + (cur ? '' : ' hidden') + '>Quitar foto</button></div>' +
+    '<input id="ph-file" type="file" accept="image/*" hidden></div></div>';
+}
+function fotoShow(url) {
+  const pv = document.getElementById('ph-prev'); if (!pv) return;
+  pv.innerHTML = url ? '<img alt="" src="' + url + '">' : ic('camera');
+  const d = document.getElementById('ph-del'); if (d) d.hidden = !url;
+}
+function fotoOpenCrop(file) {
+  const url = URL.createObjectURL(file); const im = new Image();
+  im.onload = () => {
+    FOTO.url = url; FOTO.img = im; FOTO.z = 1; FOTO.ptrs.clear();
+    document.getElementById('c-main').hidden = true;
+    const box = document.getElementById('c-crop'); box.hidden = false;
+    box.innerHTML = '<p class="note" style="margin:6px 0 10px">Arrastra la foto para encuadrar y usa la barra para acercar. También puedes pellizcar con dos dedos.</p>' +
+      '<div class="crop" id="crop-box"><img id="crop-img" alt="" draggable="false"><div class="crop-guide" aria-hidden="true"></div></div>' +
+      '<p class="note" style="margin:6px 0 0;font-size:13px">La línea de puntos marca la parte que se verá en la portada del coche.</p>' +
+      '<div class="fld"><label for="crop-z">Zoom</label><input id="crop-z" type="range" min="1" max="4" step="0.01" value="1"></div>' +
+      '<div class="actions"><button class="btn" type="button" data-a="ph-ok">Usar esta foto</button><button class="btn ghost" type="button" data-a="ph-cancel">Cancelar</button></div>';
+    const cb = document.getElementById('crop-box'); FOTO.B = cb.clientWidth || 300;
+    const ci = document.getElementById('crop-img'); ci.src = url;
+    FOTO.x = (FOTO.B - im.naturalWidth * fotoK()) / 2; FOTO.y = (FOTO.B - im.naturalHeight * fotoK()) / 2;
+    fotoApply();
+  };
+  im.onerror = () => { URL.revokeObjectURL(url); toast('No he podido abrir esa foto. Prueba con otra.'); };
+  im.src = url;
+}
+function fotoK() { const im = FOTO.img; return (FOTO.B / Math.min(im.naturalWidth, im.naturalHeight)) * FOTO.z; }
+function fotoApply() {
+  const im = FOTO.img, k = fotoK(), B = FOTO.B;
+  const w = im.naturalWidth * k, h = im.naturalHeight * k;
+  FOTO.x = Math.min(0, Math.max(B - w, FOTO.x)); FOTO.y = Math.min(0, Math.max(B - h, FOTO.y));
+  const ci = document.getElementById('crop-img'); if (!ci) return;
+  ci.style.width = w + 'px'; ci.style.height = h + 'px'; ci.style.transform = 'translate(' + FOTO.x + 'px,' + FOTO.y + 'px)';
+}
+function fotoZoom(z) {
+  const B = FOTO.B, k0 = fotoK(); const cx = (B / 2 - FOTO.x) / k0, cy = (B / 2 - FOTO.y) / k0;
+  FOTO.z = Math.min(4, Math.max(1, z)); const k1 = fotoK();
+  FOTO.x = B / 2 - cx * k1; FOTO.y = B / 2 - cy * k1; fotoApply();
+  const r = document.getElementById('crop-z'); if (r && +r.value !== FOTO.z) r.value = FOTO.z;
+}
+function fotoDone() {
+  const im = FOTO.img, k = fotoK(), side = FOTO.B / k;
+  const cv = document.createElement('canvas'); cv.width = cv.height = FOTO_PX;
+  const g = cv.getContext('2d'); g.imageSmoothingQuality = 'high';
+  g.drawImage(im, -FOTO.x / k, -FOTO.y / k, side, side, 0, 0, FOTO_PX, FOTO_PX);
+  let q = 0.8, out = cv.toDataURL('image/jpeg', q);
+  while (out.length > 260000 && q > 0.4) { q -= 0.1; out = cv.toDataURL('image/jpeg', q); }
+  FOTO.pending = out; fotoShow(out); fotoCloseCrop();
+}
+function fotoCloseCrop() {
+  FOTO.img = null; if (FOTO.url) { URL.revokeObjectURL(FOTO.url); FOTO.url = ''; } const b = document.getElementById('c-crop'); b.hidden = true; b.innerHTML = '';
+  document.getElementById('c-main').hidden = false;
+}
+document.addEventListener('change', ev => {
+  const t = ev.target;
+  if (t.id === 'ph-file' && t.files && t.files[0]) { const f = t.files[0]; t.value = ''; fotoOpenCrop(f); }
+});
+document.addEventListener('input', ev => { if (ev.target.id === 'crop-z' && FOTO.img) fotoZoom(+ev.target.value); });
+document.addEventListener('pointerdown', ev => {
+  const b = ev.target.closest && ev.target.closest('#crop-box'); if (!b || !FOTO.img) return;
+  b.setPointerCapture(ev.pointerId); FOTO.ptrs.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+  if (FOTO.ptrs.size === 2) { const [a, c] = [...FOTO.ptrs.values()]; FOTO.d0 = Math.hypot(a.x - c.x, a.y - c.y) || 1; FOTO.z0 = FOTO.z; }
+});
+document.addEventListener('pointermove', ev => {
+  if (!FOTO.img || !FOTO.ptrs.has(ev.pointerId)) return;
+  const p = FOTO.ptrs.get(ev.pointerId); const dx = ev.clientX - p.x, dy = ev.clientY - p.y;
+  FOTO.ptrs.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+  if (FOTO.ptrs.size === 1) { FOTO.x += dx; FOTO.y += dy; fotoApply(); }
+  else if (FOTO.ptrs.size === 2) { const [a, c] = [...FOTO.ptrs.values()]; fotoZoom(FOTO.z0 * (Math.hypot(a.x - c.x, a.y - c.y) / FOTO.d0)); }
+});
+const fotoUp = ev => { FOTO.ptrs.delete(ev.pointerId); };
+document.addEventListener('pointerup', fotoUp); document.addEventListener('pointercancel', fotoUp);
+
 async function saveCar(f) {
   const nombre = document.getElementById('c-nombre').value.trim();
   if (!nombre) return formErr('c-err', 'Falta el nombre del coche.');
@@ -865,6 +966,7 @@ async function saveCar(f) {
   };
   o.potencia_cv = numOrNull(val('c-cv')); o.km_anual = numOrNull(val('c-kmy')); o.bastidor = val('c-bast').toUpperCase() || null;
   if (id) o.id = id; else o.plan = planFor(comb);
+  if (FOTO.pending !== undefined) o.foto = FOTO.pending || null;
   if (kmv !== '' && (!old || old.km !== +kmv)) { o.km = +kmv; o.km_fecha = iso(TODAY); }
   if (kmv === '' && old && old.km != null) { o.km = null; o.km_fecha = null; }
   busy(f, true);
@@ -872,8 +974,12 @@ async function saveCar(f) {
   if (!r.ok) { busy(f, false); return formErr('c-err', errMsg(r)); }
   const rl = await reload();
   if (!rl.ok) { busy(f, false); return formErr('c-err', errMsg(rl)); }
+  const savedId = id || r.coche.id; const nuevo = cars.find(x => x.id === savedId);
+  const perdida = FOTO.pending && nuevo && !nuevo.foto;
   if (!id) { S.carId = r.coche.id; S.screen = 'car'; S.tab = 'proximo'; }
-  closeSheet(); render(!!id); toast(id ? 'Coche actualizado' : 'Coche añadido');
+  FOTO.pending = undefined;
+  closeSheet(); render(!!id);
+  toast(perdida ? 'El coche se guardó, pero el servidor no guardó la foto. Avísame y lo arreglamos.' : (id ? 'Coche actualizado' : 'Coche añadido'));
 }
 function carDelSheet() {
   const c = car();
@@ -1063,6 +1169,10 @@ document.addEventListener('click', ev => {
       break;
     }
     case 'km': kmForm(); break;
+    case 'ph-pick': { const i = document.getElementById('ph-file'); if (i) i.click(); break; }
+    case 'ph-del': FOTO.pending = null; fotoShow(''); { const b = document.querySelector('[data-a="ph-pick"]'); if (b) b.textContent = 'Elegir foto'; } break;
+    case 'ph-ok': fotoDone(); { const b = document.querySelector('[data-a="ph-pick"]'); if (b) b.textContent = 'Cambiar foto'; } break;
+    case 'ph-cancel': fotoCloseCrop(); break;
     case 'import': importSheet(); break;
     case 'copy': {
       const txt = PROMPTS[t.dataset.k][2]; const box = document.getElementById('pp-' + t.dataset.k);
