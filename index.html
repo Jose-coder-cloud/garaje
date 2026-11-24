@@ -164,6 +164,7 @@ svg.ic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
 .kpi.wide{grid-column:1 / -1}
+.kpi .kpi-s{display:block;font-size:13px;color:var(--ink2)}
 .kpi small{font-size:13px;color:var(--ink2);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .kpi b{display:block;font-family:var(--display);font-weight:800;font-size:38px;line-height:1.05}
 .ybar{display:grid;grid-template-columns:48px 1fr 70px;gap:10px;align-items:center}
@@ -178,6 +179,8 @@ svg.ic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-
 .brk span{display:inline-flex;align-items:center;gap:8px}
 .t-mant{background:var(--t-mant)} .t-rep{background:var(--t-rep)} .t-neum{background:var(--t-neum)} .t-itv{background:var(--t-itv)} .t-seg{background:var(--t-seg)} .t-imp{background:var(--t-imp)} .t-otros{background:var(--t-otros)}
 .note{font-size:14px;color:var(--ink2)}
+.blk-btn{padding:10px 0 8px;border-top:1px solid var(--line)}
+.blk-btn .btn{min-height:46px}
 
 .block{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 16px 8px}
 .bh{display:flex;justify-content:space-between;align-items:center;padding:8px 0 4px}
@@ -263,6 +266,11 @@ svg.ic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-
 .prow{border:1px solid var(--line);border-radius:14px;padding:4px 12px 12px;margin-top:12px;background:var(--bg)}
 .prow label{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weight:600;color:var(--ink2);margin-top:10px}
 .prow input{font:inherit;font-size:16px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;width:100%;min-height:48px}
+.irow .ick{flex-direction:row;align-items:center;gap:10px;color:var(--ink);font-size:16px}
+.irow .ick input{width:22px;height:22px;min-height:0;margin:0;padding:0;flex:none;accent-color:var(--blue)}
+.irow select,.irow textarea,.irow .c-val{font:inherit;font-size:16px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;width:100%;min-height:48px}
+.irow textarea{min-height:70px}
+.imp-txt{min-height:160px!important;font-size:14px!important;font-family:ui-monospace,Menlo,monospace!important}
 .warn{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:12px 14px;color:var(--ink2);font-size:15px}
 </style>
 </head>
@@ -670,7 +678,10 @@ function tabGastos(c) {
   const years = Object.keys(byY).sort().reverse();
   const thisY = String(TODAY.getFullYear());
   const tot = byY[thisY] ? byY[thisY].total : 0;
-  const avg = tot / (TODAY.getMonth() + 1);
+  /* Media al mes: todo lo gastado desde el primer apunte, entre los meses que han pasado desde entonces */
+  const first = h.length ? pd(h[h.length - 1].fecha) : null;
+  const meses = first ? Math.max(1, (TODAY.getFullYear() - first.getFullYear()) * 12 + TODAY.getMonth() - first.getMonth() + 1) : 1;
+  const avg = h.reduce((s, x) => s + x.coste, 0) / meses;
   const max = Math.max(1, ...years.map(y => byY[y].total));
   const cls = { mantenimiento: 't-mant', reparacion: 't-rep', neumaticos: 't-neum', itv: 't-itv', seguro: 't-seg', impuesto: 't-imp', otros: 't-otros' };
   const bars = years.map(y => '<div class="ybar"><span class="y num">' + y + '</span><span class="tr" style="width:' + Math.max(8, byY[y].total / max * 100) + '%">' +
@@ -681,7 +692,7 @@ function tabGastos(c) {
     '<div class="brk"><span><i class="sw ' + k + '"></i>' + n + '</span><b class="num">' + eur(byY[brkYear].t[k]) + '</b></div>').join('') : '';
   const legend = TIPOS.map(([k, n]) => '<span><i class="sw ' + k + '"></i>' + n + '</span>').join('');
   return '<div class="kpis"><div class="kpi wide"><small>Gastado en ' + thisY + '</small><b class="num">' + eur(tot) + '</b></div>' +
-    '<div class="kpi"><small>Media al mes</small><b class="num">' + eur(avg) + '</b></div>' +
+    '<div class="kpi"><small>Media al mes</small><b class="num">' + eur(avg) + '</b>' + (first ? '<span class="kpi-s">desde ' + MESES_L[first.getMonth()] + ' ' + first.getFullYear() + '</span>' : '') + '</div>' +
     '<div class="kpi"><small>Km al año</small><b class="num">' + fmt(kmInfo(c).perYear) + '</b></div></div>' +
     '<div class="block" style="padding:14px 16px"><h3 class="sub2" style="margin:0 0 12px">Por año</h3><div class="list" style="gap:10px">' + (bars || '<div class="empty">Aún no hay gastos.</div>') + '</div>' +
     '<div class="legend">' + legend + '</div></div>' +
@@ -689,23 +700,36 @@ function tabGastos(c) {
     '<p class="note">Aquí no cuentan el combustible ni la carga, a propósito.</p>';
 }
 function kv(k, v) { return '<dl style="margin:0"><div class="kv"><dt>' + k + '</dt><dd>' + (v === '' || v == null ? '—' : esc(v)) + '</dd></div></dl>'; }
-function block(title, rows, editAction) {
+function block(title, rows, editAction, extra) {
   return '<section class="block"><div class="bh"><h3>' + title + '</h3>' +
     (editAction ? '<button class="edit" data-a="' + editAction + '">Editar</button>' : '<button class="edit" data-a="soon" data-m="Editar este bloque llega en la fase 3.">Editar</button>') + '</div>' +
-    rows.map(r => kv(r[0], r[1])).join('') + '</section>';
+    rows.map(r => kv(r[0], r[1])).join('') + (extra || '') + '</section>';
 }
 function tabFicha(c, items) {
   const itv = items.find(i => i.key === 'itv'), imp = items.find(i => i.key === 'impuesto');
   const itvs = carHist(c.id).filter(x => x.tipo === 'itv');
   const s = c.seguro || {}, n = c.neum || {}, t = c.taller || {}, g = c.gar || {};
+  /* Último cambio de neumáticos: el apunte más reciente de tipo neumáticos */
+  const un = carHist(c.id).find(x => x.tipo === 'neumaticos');
+  let ultNeum = 'Sin dato';
+  if (un) {
+    ultNeum = fdate(pd(un.fecha));
+    if (un.km != null) {
+      ultNeum += ' · ' + fmt(un.km) + ' km';
+      const now = kmInfo(c).now;
+      if (now != null && now >= un.km) ultNeum += ' (hace ' + fmt(now - un.km) + ' km)';
+    }
+  }
   return block('Datos del coche', [['Marca y modelo', (c.marca + ' ' + c.modelo).trim()], ['Versión', c.version], ['Matrícula', c.matricula],
     ['Primera matriculación', c.matric ? fdate(pd(c.matric)) : ''], ['Combustible', c.comb], ['Etiqueta DGT', DGT_TXT[c.dgt]], ['Potencia', c.cv ? c.cv + ' CV' : ''], ['Color', c.color], ['Bastidor', c.bastidor],
     ['Kilómetros', c.km != null ? fmt(c.km) + ' km' + (c.kmDate ? ' (' + fdate(pd(c.kmDate)) + ')' : '') : '']], 'car-edit') +
-    block('Seguro', [['Compañía', s.cia], ['Póliza', s.poliza], ['Cobertura', s.cob], ['Vence', s.vence ? fdate(pd(s.vence)) : ''], ['Prima', s.prima != null ? eur(s.prima) : ''], ['Asistencia', s.tel]], 'ed-seguro') +
+    block('Seguro', [['Compañía', s.cia], ['Póliza', s.poliza], ['Cobertura', s.cob], ['Vence', s.vence ? fdate(pd(s.vence)) : ''], ['Prima', s.prima != null ? eur(s.prima) : ''], ['Asistencia', s.tel]], 'ed-seguro',
+      '<div class="blk-btn">' + (s.doc ? '<button class="btn ghost" data-a="pol-open">' + ic('clip') + 'Ver póliza</button>'
+        : '<button class="btn ghost" data-a="pol-pick">' + ic('clip') + 'Adjuntar póliza (PDF)</button>') + '</div>') +
     block('ITV e impuesto', [['Última ITV', itvs.length ? fdate(pd(itvs[0].fecha)) : 'Sin dato'], ['Próxima ITV', itv && itv.due ? fdate(itv.due) : 'Sin dato'],
       ['Impuesto', c.imp && c.imp.dia ? c.imp.dia + ' de ' + MESES_L[c.imp.mes - 1] + (c.imp.importe != null ? ' · ' + eur(c.imp.importe) : '') : ''],
       ['Próximo pago', imp && imp.due ? fdate(imp.due) : '']], 'ed-itv') +
-    block('Neumáticos', [['Medida', n.medida], ['Presiones', n.pres]], 'ed-neum') +
+    block('Neumáticos', [['Medida', n.medida], ['Presiones', n.pres], ['Último cambio', ultNeum]], 'ed-neum') +
     block('Plan de mantenimiento', c.plan.map(p => [p.n, p.m + ' meses' + (p.km ? ' o ' + fmt(p.km) + ' km' : '')]), 'ed-plan') +
     block('Taller y garantía', [['Taller', t.n], ['Teléfono', t.tel], ['Garantía hasta', g.hasta ? fdate(pd(g.hasta)) : 'Sin garantía'], ['Nota', g.nota]], 'ed-taller') +
     '<button class="btn" data-a="soon" data-m="El enlace de solo lectura llega en la fase 5.">Compartir enlace de solo lectura</button>' +
@@ -1103,6 +1127,7 @@ async function saveBlock(f) {
   const k = f.dataset.kind; const o = { id: S.carId };
   if (k === 'seguro') {
     o.seguro = clean({ cia: val('s-cia'), poliza: val('s-poliza'), cob: val('s-cob'), vence: val('s-vence'), prima: numOrNull(val('s-prima')), tel: val('s-tel') });
+    const prevDoc = (car().seguro || {}).doc; if (prevDoc) o.seguro.doc = prevDoc; /* la marca de «hay póliza» la pone el servidor; no se pierde al editar */
   } else if (k === 'itv') {
     const mes = val('i-mes'), dia = val('i-dia');
     if ((mes && !dia) || (!mes && dia)) return formErr('b-err', 'Para el impuesto hacen falta el mes y el día.');
@@ -1164,12 +1189,307 @@ const PROMPTS = {
   factura: ['Factura de taller', 'Crea un apunte por cada línea de la factura.', 'Mira la foto de esta factura de taller y devuélveme SOLO un bloque CSV con separador punto y coma y esta cabecera: fecha;km;tipo;concepto;taller;coste. Fecha en AAAA-MM-DD; km y coste solo números (coste con IVA, decimales con punto); tipo: mantenimiento, reparacion, neumaticos, itv u otros; agrupa los trabajos en líneas cortas; si un dato no aparece, déjalo vacío. No añadas nada más.'],
   ficha: ['Ficha técnica o permiso', 'Rellena el formulario del coche para que lo revises.', 'Mira la foto de esta ficha técnica (y/o permiso de circulación) y devuélveme SOLO líneas campo;valor con estos campos: matricula;marca;modelo;version;bastidor;fecha_matriculacion;combustible;potencia_cv;neumaticos. Fechas en AAAA-MM-DD. Combustible: Gasolina, Diésel, Híbrido, Híbrido enchufable, Microhíbrido, Eléctrico o GLP. Si un dato no aparece, déjalo vacío. No añadas nada más.'],
   seguro: ['Seguro', 'Rellena los datos del seguro para que los revises.', 'Mira la foto de esta póliza o recibo de seguro y devuélveme SOLO líneas campo;valor con estos campos: compania;poliza;cobertura;fecha_vencimiento;prima_anual;telefono_asistencia. Fechas en AAAA-MM-DD, importes solo números con punto decimal. No añadas nada más.'],
-  itv: ['ITV', 'Crea un apunte con el resultado y los defectos.', 'Mira la foto de este informe de ITV y devuélveme SOLO líneas campo;valor con estos campos: fecha;km;resultado;estacion;defectos;importe. Fechas en AAAA-MM-DD, km e importe solo números. Resultado: Favorable, Favorable con defectos leves, Desfavorable o Negativa. No añadas nada más.']
+  itv: ['ITV', 'Crea un apunte con el resultado y los defectos.', 'Mira la foto de este informe de ITV y devuélveme SOLO líneas campo;valor con estos campos: fecha;km;resultado;estacion;defectos;importe. Los defectos, todos en una sola línea separados por comas. Fechas en AAAA-MM-DD, km e importe solo números. Resultado: Favorable, Favorable con defectos leves, Desfavorable o Negativa. No añadas nada más.']
 };
 function importSheet() {
   openSheet('Importar foto',
-    '<p class="note">La app no lee fotos. Copias un prompt, lo pegas con la foto en ChatGPT o Claude, y luego pegarás aquí la respuesta (eso llega en la fase 4).</p>' +
-    Object.keys(PROMPTS).map(k => '<div class="docc"><b>' + PROMPTS[k][0] + '</b><p>' + PROMPTS[k][1] + '</p><button class="btn ghost" data-a="copy" data-k="' + k + '">Copiar prompt</button><div class="pp" id="pp-' + k + '"></div></div>').join(''));
+    '<p class="note">1. Pulsa «Copiar prompt». 2. Pégalo en ChatGPT o Claude junto con la foto del papel. 3. Copia su respuesta entera, vuelve aquí y pulsa «Pegar respuesta». Antes de guardar podrás revisarlo todo.</p>' +
+    Object.keys(PROMPTS).map(k => '<div class="docc"><b>' + PROMPTS[k][0] + '</b><p>' + PROMPTS[k][1] + '</p>' +
+      '<div class="two"><button class="btn ghost" data-a="copy" data-k="' + k + '">Copiar prompt</button><button class="btn" data-a="imp-paste" data-k="' + k + '">Pegar respuesta</button></div>' +
+      '<div class="pp" id="pp-' + k + '"></div></div>').join(''));
+}
+
+/* ---- Fase 4: pegar la respuesta, revisarla y guardarla ---- */
+const IMP = { k: '', txt: '', rows: [], campos: [] };
+const norm = s => String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+const VACIO = /^(|-+|—|n\/?a|null|none|ninguno|ninguna|vacio|no aparece|no consta|desconocido|sin datos?)$/;
+function cleanVal(v) {
+  v = String(v == null ? '' : v).trim().replace(/^\*+|\*+$/g, '').trim();
+  if (/^".*"$/.test(v) || /^'.*'$/.test(v)) v = v.slice(1, -1).trim();
+  return VACIO.test(norm(v)) ? '' : v;
+}
+/* Fechas: 2024-03-15, 15/03/2024, 15-03-2024, 15.03.24 → 2024-03-15 */
+function parseFecha(v) {
+  v = cleanVal(v); let m, y, mo, d;
+  if ((m = v.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/))) { y = +m[1]; mo = +m[2]; d = +m[3]; }
+  else if ((m = v.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/))) { d = +m[1]; mo = +m[2]; y = +m[3]; if (y < 100) y += 2000; }
+  else return '';
+  if (mo < 1 || mo > 12 || d < 1 || d > new Date(y, mo, 0).getDate()) return '';
+  return y + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+}
+/* Números enteros (km, CV): «45.230 km» → 45230 */
+function parseEntero(v) { const t = cleanVal(v).replace(/[^\d.,]/g, '').replace(/[.,](?=\d{3}(\D|$))/g, '').replace(/[.,]\d*$/, ''); return t === '' ? null : +t; }
+/* Importes: «1.234,56 €», «89,90», «89.90» → número */
+function parseImporte(v) {
+  let t = cleanVal(v).replace(/[^\d.,-]/g, '');
+  if (!/\d/.test(t)) return null;
+  const c = t.lastIndexOf(','), p = t.lastIndexOf('.');
+  if (c >= 0 && p >= 0) t = c > p ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, '');
+  else if (c >= 0) t = (t.match(/,/g).length > 1 ? t.replace(/,/g, '') : t.replace(',', '.'));
+  else if ((t.match(/\./g) || []).length > 1) t = t.replace(/\./g, '');
+  const n = parseFloat(t); return isNaN(n) ? null : Math.round(n * 100) / 100;
+}
+/* Quita los ``` y el texto de adorno que a veces añade el chat */
+function cleanLines(txt) {
+  return String(txt || '').replace(/\r/g, '').split('\n').map(l => l.trim())
+    .filter(l => l && !/^```/.test(l) && !/^(csv|text|txt)$/i.test(l) && !/^\|?\s*-{3,}/.test(l))
+    .map(l => l.replace(/^[-*•]\s+/, '').replace(/^\|(.*)\|$/, '$1'));
+}
+/* Separa una línea por «;» (o «|», o tabulador) respetando comillas */
+function splitRow(l) {
+  const sep = l.includes(';') ? ';' : l.includes('\t') ? '\t' : l.includes('|') ? '|' : ',';
+  const out = []; let cur = '', q = false;
+  for (const ch of l) {
+    if (ch === '"') q = !q;
+    else if (ch === sep && !q) { out.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  out.push(cur); return out.map(cleanVal);
+}
+/* Líneas campo;valor → { campo: valor }. Las líneas sueltas se suman al campo anterior. */
+function parseCampos(txt, alias, multi) {
+  const o = {}; let last = '';
+  cleanLines(txt).forEach(l => {
+    const m = l.replace(/\*\*/g, '').match(/^([A-Za-zÁÉÍÓÚÜÑáéíóúüñ_ ]{2,40}?)\s*[;:=\t|]\s*(.*)$/);
+    const key = m ? alias[norm(m[1]).replace(/\s+/g, '_')] : null;
+    if (key) { o[key] = cleanVal(m[2]); last = key; }
+    else if (m && norm(m[1]) === 'campo') return;
+    else if (last && multi && multi.includes(last)) o[last] = (o[last] ? o[last] + '; ' : '') + cleanVal(l);
+  });
+  return o;
+}
+const TIPO_ALIAS = { mantenimiento: 'mantenimiento', revision: 'mantenimiento', reparacion: 'reparacion', averia: 'reparacion', neumaticos: 'neumaticos', neumatico: 'neumaticos', ruedas: 'neumaticos', itv: 'itv', seguro: 'seguro', impuesto: 'impuesto', otros: 'otros', otro: 'otros' };
+/* Adivina qué tarea del plan cumple un concepto («Cambio de aceite» → Aceite y filtro) */
+function guessPlan(c, que, tipo) {
+  const q = norm(que);
+  const byName = c.plan.find(t => q.includes(norm(t.n)));
+  if (byName) return byName.id;
+  const rules = [['habit', /habitaculo|polen|cabina/], ['aire', /filtro (de )?aire/], ['aceite', /aceite/], ['frenos', /liquido (de )?fren/], ['bateria', /bateria/], ['neum', /neumatic|cubiertas/], ['rev', /revision/]];
+  for (const [id, re] of rules) if (re.test(q) && c.plan.some(t => t.id === id) && (id !== 'neum' || tipo === 'neumaticos')) return id;
+  return '';
+}
+function parseFactura(txt, c) {
+  const lines = cleanLines(txt); if (!lines.length) return [];
+  const COLS = { fecha: 'fecha', km: 'km', kilometros: 'km', tipo: 'tipo', concepto: 'que', que: 'que', descripcion: 'que', trabajo: 'que', taller: 'taller', coste: 'coste', importe: 'coste', precio: 'coste', total: 'coste' };
+  let cols = ['fecha', 'km', 'tipo', 'que', 'taller', 'coste'], data = lines;
+  const hi = lines.findIndex(l => splitRow(l).map(h => COLS[norm(h)]).filter(Boolean).length >= 3);
+  if (hi >= 0) { cols = splitRow(lines[hi]).map(h => COLS[norm(h)]); data = lines.slice(hi + 1); }
+  return data.map(l => {
+    const v = splitRow(l); const r = {};
+    cols.forEach((k, i) => { if (k) r[k] = v[i] || ''; });
+    if (v.length < 3 || !r.que) return null;
+    const tipo = TIPO_ALIAS[norm(r.tipo)] || 'otros';
+    return { on: true, fecha: parseFecha(r.fecha), km: parseEntero(r.km), tipo, que: r.que, taller: r.taller || '', coste: parseImporte(r.coste), plan: guessPlan(c, r.que, tipo), notas: '' };
+  }).filter(Boolean);
+}
+function parseItv(txt) {
+  const o = parseCampos(txt, { fecha: 'fecha', fecha_inspeccion: 'fecha', km: 'km', kilometros: 'km', resultado: 'resultado', estacion: 'estacion', estacion_itv: 'estacion', defectos: 'defectos', importe: 'importe', precio: 'importe', coste: 'importe' }, ['defectos']);
+  if (!o.fecha && !o.resultado) return [];
+  const res = o.resultado || '';
+  const mal = /desfavorable|negativ/.test(norm(res));
+  return [{ on: true, fecha: parseFecha(o.fecha), km: parseEntero(o.km), tipo: mal ? 'otros' : 'itv', que: 'ITV' + (res ? ': ' + res : ''), taller: o.estacion || '', coste: parseImporte(o.importe), plan: '', notas: o.defectos ? 'Defectos: ' + o.defectos : '', aviso: mal ? 'Una ITV desfavorable o negativa no cuenta como pasada. Por eso está como «Otros». Cuando la pases, apunta la favorable.' : '' }];
+}
+/* Campos de la ficha y del seguro: [clave, etiqueta, tipo de campo, valor actual, cómo leer el valor] */
+function camposDef(k, c) {
+  const s = c.seguro || {};
+  if (k === 'ficha') return [
+    ['matricula', 'Matrícula', 'text', c.matricula, v => cleanVal(v).toUpperCase()],
+    ['marca', 'Marca', 'text', c.marca, cleanVal], ['modelo', 'Modelo', 'text', c.modelo, cleanVal], ['version', 'Versión', 'text', c.version, cleanVal],
+    ['bastidor', 'Bastidor', 'text', c.bastidor, v => cleanVal(v).toUpperCase().replace(/\s/g, '')],
+    ['matriculacion', 'Primera matriculación', 'date', c.matric, parseFecha],
+    ['combustible', 'Combustible', 'comb', c.comb, parseComb],
+    ['potencia_cv', 'Potencia (CV)', 'number', c.cv, parseEntero],
+    ['medida', 'Medida de neumáticos', 'text', (c.neum || {}).medida, cleanVal]];
+  return [
+    ['cia', 'Compañía', 'text', s.cia, cleanVal], ['poliza', 'Póliza', 'text', s.poliza, cleanVal], ['cob', 'Cobertura', 'text', s.cob, cleanVal],
+    ['vence', 'Vencimiento', 'date', s.vence, parseFecha], ['prima', 'Prima anual (€)', 'money', s.prima, parseImporte], ['tel', 'Teléfono de asistencia', 'tel', s.tel, cleanVal]];
+}
+const CAMPO_ALIAS = {
+  ficha: { matricula: 'matricula', marca: 'marca', modelo: 'modelo', version: 'version', bastidor: 'bastidor', vin: 'bastidor', numero_de_bastidor: 'bastidor', fecha_matriculacion: 'matriculacion', fecha_primera_matriculacion: 'matriculacion', primera_matriculacion: 'matriculacion', matriculacion: 'matriculacion', combustible: 'combustible', potencia_cv: 'potencia_cv', potencia: 'potencia_cv', cv: 'potencia_cv', neumaticos: 'medida', medida_neumaticos: 'medida', neumatico: 'medida' },
+  seguro: { compania: 'cia', aseguradora: 'cia', cia: 'cia', poliza: 'poliza', numero_poliza: 'poliza', numero_de_poliza: 'poliza', cobertura: 'cob', modalidad: 'cob', fecha_vencimiento: 'vence', vencimiento: 'vence', vence: 'vence', prima_anual: 'prima', prima: 'prima', importe: 'prima', telefono_asistencia: 'tel', asistencia: 'tel', telefono: 'tel' }
+};
+function parseComb(v) {
+  const t = norm(v);
+  if (!t) return '';
+  if (/enchufable|phev|plug/.test(t)) return 'Híbrido enchufable';
+  if (/micro|mhev|mild|ligero/.test(t)) return 'Microhíbrido';
+  if (/hibrid|hev/.test(t)) return 'Híbrido';
+  if (/electri|bev/.test(t)) return 'Eléctrico';
+  if (/diesel|gasoil|gasoleo/.test(t)) return 'Diésel';
+  if (/glp|lpg|autogas/.test(t)) return 'GLP';
+  if (/gasolina/.test(t)) return 'Gasolina';
+  return '';
+}
+function parseCamposKind(k, txt, c) {
+  const raw = parseCampos(txt, CAMPO_ALIAS[k]);
+  return camposDef(k, c).filter(d => raw[d[0]] != null).map(([key, label, type, cur, conv]) => {
+    const nv = conv(raw[key]);
+    const curS = cur == null ? '' : String(cur);
+    return { key, label, type, cur: curS, val: nv == null ? '' : String(nv), on: nv !== '' && nv != null && String(nv) !== curS };
+  }).filter(f => f.val !== '');
+}
+function pasteSheet(k) {
+  if (IMP.k !== k) IMP.txt = '';
+  IMP.k = k;
+  openSheet(PROMPTS[k][0],
+    '<p class="note">Copia la respuesta del chat entera y pégala aquí. Mantén pulsado el cuadro y elige «Pegar».</p>' +
+    '<div class="fld"><label for="imp-txt">Respuesta del chat</label><textarea id="imp-txt" class="imp-txt" autocapitalize="off" autocorrect="off" spellcheck="false">' + esc(IMP.txt) + '</textarea></div>' +
+    '<p class="note danger" id="imp-err" role="alert" style="margin-top:10px;display:none"></p>' +
+    '<div class="actions"><button class="btn" data-a="imp-review">Revisar</button><button class="btn ghost" data-a="import">Volver</button></div>');
+}
+function impReview() {
+  const txt = val('imp-txt'); IMP.txt = txt;
+  if (!txt) return formErr('imp-err', 'El cuadro está vacío. Pega primero la respuesta del chat.');
+  const c = car(), k = IMP.k;
+  if (k === 'factura' || k === 'itv') {
+    IMP.rows = k === 'factura' ? parseFactura(txt, c) : parseItv(txt);
+    if (!IMP.rows.length) return formErr('imp-err', 'No encuentro datos en lo que has pegado. Asegúrate de copiar la respuesta entera' + (k === 'factura' ? ', con la línea de cabecera (fecha;km;tipo;concepto;taller;coste).' : ' (líneas como «fecha;2024-03-15»).'));
+    IMP.rows.forEach(r => {
+      if (hist.some(h => h.carId === c.id && h.fecha === r.fecha && norm(h.que) === norm(r.que))) { r.on = false; r.dup = true; }
+    });
+    reviewApuntes();
+  } else {
+    IMP.campos = parseCamposKind(k, txt, c);
+    if (!IMP.campos.length) return formErr('imp-err', 'No encuentro datos en lo que has pegado. Asegúrate de copiar la respuesta entera (líneas como «marca;Seat»).');
+    reviewCampos();
+  }
+}
+function reviewApuntes() {
+  const c = car(), k = IMP.k;
+  const planOpts = sel => '<option value="">Ninguna</option>' + c.plan.map(t => '<option value="' + esc(t.id) + '"' + (sel === t.id ? ' selected' : '') + '>' + esc(t.n) + '</option>').join('');
+  const cards = IMP.rows.map((r, i) =>
+    '<div class="prow irow" data-i="' + i + '">' +
+    '<label class="ick"><input type="checkbox" class="r-on"' + (r.on ? ' checked' : '') + '> Guardar este apunte</label>' +
+    (r.dup ? '<p class="note danger" style="margin:6px 0 0">Ya tienes un apunte igual (misma fecha y concepto). Por eso está sin marcar.</p>' : '') +
+    (r.aviso ? '<p class="note" style="margin:6px 0 0">' + esc(r.aviso) + '</p>' : '') +
+    '<label>Qué se hizo<input class="r-que" type="text" value="' + esc(r.que) + '"></label>' +
+    '<div class="two"><label>Fecha<input class="r-fecha" type="date" value="' + esc(r.fecha) + '"></label>' +
+    '<label>Kilómetros<input class="r-km" type="number" inputmode="numeric" min="0" value="' + (r.km != null ? r.km : '') + '"></label></div>' +
+    '<div class="two"><label>Tipo<select class="r-tipo">' + TIPOS.map(([t, n]) => '<option value="' + t + '"' + (r.tipo === t ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></label>' +
+    '<label>Coste (€)<input class="r-coste" type="number" inputmode="decimal" step="0.01" min="0" value="' + (r.coste != null ? r.coste : '') + '"></label></div>' +
+    '<label>' + (k === 'itv' ? 'Estación' : 'Taller') + '<input class="r-taller" type="text" value="' + esc(r.taller) + '"></label>' +
+    '<label>Cumple del plan<select class="r-plan">' + planOpts(r.plan) + '</select></label>' +
+    (r.notas || k === 'itv' ? '<label>Notas<textarea class="r-notas">' + esc(r.notas) + '</textarea></label>' : '') +
+    '</div>').join('');
+  openSheet('Revisa y guarda',
+    '<p class="note">' + (IMP.rows.length === 1 ? 'He encontrado 1 apunte.' : 'He encontrado ' + IMP.rows.length + ' apuntes, uno por línea de la factura.') + ' Corrige lo que haga falta y desmarca lo que no quieras guardar.</p>' +
+    '<form id="f-imp" novalidate>' + cards +
+    '<div class="fld"><label>' + (k === 'itv' ? 'Foto del informe (opcional)' : 'Foto o PDF de la factura (opcional)') + '</label><div id="fac-box" class="fac-box"></div><input id="fac-file" type="file" accept="image/*,application/pdf" hidden>' +
+    (IMP.rows.length > 1 ? '<p class="note" style="margin-top:4px">Se adjunta al primer apunte marcado.</p>' : '') + '</div>' +
+    '<p class="note danger" id="imp-err" role="alert" style="margin-top:10px;display:none"></p>' +
+    '<div class="actions"><button class="btn" type="submit" data-t="Guardar">Guardar</button><button class="btn ghost" type="button" data-a="imp-paste" data-k="' + k + '">Volver a pegar</button></div></form>');
+  FAC.pending = undefined; FAC.cur = ''; FAC.id = ''; facRefresh();
+}
+function campoInput(f, i) {
+  const id = 'ic-' + i;
+  if (f.type === 'comb') return '<select id="' + id + '" class="c-val">' + opts(COMBUSTIBLES, f.val) + '</select>';
+  const t = f.type === 'money' ? 'number" inputmode="decimal" step="0.01' : f.type === 'number' ? 'number" inputmode="numeric' : f.type;
+  return '<input id="' + id + '" class="c-val" type="' + t + '" value="' + esc(f.val) + '">';
+}
+function campoNow(f) {
+  if (!f.cur) return 'Ahora está vacío';
+  const v = f.type === 'date' ? fdate(pd(f.cur)) : f.type === 'money' ? eur(+f.cur) : f.cur;
+  return f.cur === f.val ? 'Igual que ahora' : 'Ahora: ' + v;
+}
+function reviewCampos() {
+  const k = IMP.k;
+  const rows = IMP.campos.map((f, i) =>
+    '<div class="prow irow" data-i="' + i + '"><label class="ick"><input type="checkbox" class="r-on"' + (f.on ? ' checked' : '') + '> ' + esc(f.label) + '</label>' +
+    '<div style="margin-top:8px">' + campoInput(f, i) + '</div><p class="note" style="margin-top:6px">' + esc(campoNow(f)) + '</p></div>').join('');
+  openSheet('Revisa y guarda',
+    '<p class="note">Marcados están los datos que cambian. Corrige lo que haga falta y desmarca lo que no quieras cambiar. Lo que no aparece aquí se queda como está.</p>' +
+    '<form id="f-imp" novalidate>' + rows +
+    '<p class="note danger" id="imp-err" role="alert" style="margin-top:10px;display:none"></p>' +
+    '<div class="actions"><button class="btn" type="submit" data-t="Guardar">Guardar</button><button class="btn ghost" type="button" data-a="imp-paste" data-k="' + k + '">Volver a pegar</button></div></form>');
+}
+async function saveImport(f) {
+  const c = car(), k = IMP.k;
+  const cards = Array.from(f.querySelectorAll('.irow'));
+  if (k === 'factura' || k === 'itv') {
+    const list = [];
+    for (const el of cards) {
+      if (!el.querySelector('.r-on').checked) continue;
+      const g = s => { const e = el.querySelector(s); return e ? e.value.trim() : ''; };
+      const o = { coche_id: c.id, fecha: g('.r-fecha'), km: numOrNull(g('.r-km')), tipo: g('.r-tipo'), que: g('.r-que'), taller: g('.r-taller') || null, coste: numOrNull(g('.r-coste')), plan: g('.r-plan') || null, notas: g('.r-notas') || null };
+      if (!o.fecha || !o.que) return formErr('imp-err', 'A «' + (o.que || 'un apunte') + '» le falta la fecha o qué se hizo.');
+      list.push(o);
+    }
+    if (!list.length) return formErr('imp-err', 'No hay ningún apunte marcado para guardar.');
+    busy(f, true);
+    let ok = 0, firstId = '', fail = '';
+    for (const o of list) {
+      const r = await api('guardar_apunte', { p_apunte: o });
+      if (S.screen === 'pin') return;
+      if (!r.ok) { fail = errMsg(r); break; }
+      ok++; if (!firstId && r.apunte) firstId = r.apunte.id;
+    }
+    let msg = ok === 1 ? '1 apunte guardado' : ok + ' apuntes guardados';
+    if (ok && FAC.pending && firstId) {
+      const rf = await api('guardar_factura', { p_apunte_id: firstId, p_mime: FAC.pending.mime, p_datos: FAC.pending.datos });
+      if (S.screen === 'pin') return;
+      msg += rf.ok ? ' con la factura' : ', pero la factura no se pudo guardar';
+    }
+    FAC.pending = undefined;
+    const rl = await reload();
+    if (fail) { closeSheet(); render(true); toast((ok ? 'Se guardaron ' + ok + ' y luego falló: ' : 'No se guardó nada: ') + fail); return; }
+    if (!rl.ok) { busy(f, false); return formErr('imp-err', errMsg(rl)); }
+    IMP.txt = ''; S.tab = 'historial'; S.filter = 'todos';
+    closeSheet(); render(); toast(msg);
+    return;
+  }
+  const ch = {};
+  cards.forEach(el => { if (el.querySelector('.r-on').checked) { const fd = IMP.campos[+el.dataset.i]; ch[fd.key] = el.querySelector('.c-val').value.trim(); } });
+  if (!Object.keys(ch).length) return formErr('imp-err', 'No hay ningún dato marcado para cambiar.');
+  const o = { id: c.id };
+  if (k === 'ficha') {
+    ['matricula', 'marca', 'modelo', 'version', 'bastidor', 'matriculacion', 'combustible'].forEach(x => { if (x in ch) o[x] = x === 'matricula' || x === 'bastidor' ? ch[x].toUpperCase() || null : ch[x] || null; });
+    if ('combustible' in ch && !o.combustible) delete o.combustible;
+    if ('potencia_cv' in ch) o.potencia_cv = numOrNull(ch.potencia_cv);
+    if ('medida' in ch) o.neumaticos = clean(Object.assign({}, c.neum, { medida: ch.medida }));
+  } else {
+    const nv = Object.assign({}, c.seguro);
+    Object.keys(ch).forEach(x => { nv[x] = x === 'prima' ? numOrNull(ch[x]) : ch[x]; });
+    o.seguro = clean(nv);
+  }
+  busy(f, true);
+  const r = await api('guardar_coche', { p_coche: o });
+  if (S.screen === 'pin') return;
+  if (!r.ok) { busy(f, false); return formErr('imp-err', errMsg(r)); }
+  const rl = await reload();
+  if (!rl.ok) { busy(f, false); return formErr('imp-err', errMsg(rl)); }
+  IMP.txt = ''; S.tab = 'ficha';
+  closeSheet(); render(); toast(k === 'ficha' ? 'Ficha actualizada' : 'Seguro actualizado');
+}
+
+/* ---- Póliza del seguro en PDF (tabla «documentos» en Supabase) ---- */
+const POL_MAX = 4 * 1048576;
+const polErr = r => (r.error === 'servidor' && /could not find|not find the function|404/i.test(r.detalle || '')) ? 'Falta preparar Supabase para guardar pólizas (el paso del SQL). Avísame.' : r.error === 'muy_grande' ? 'El PDF es demasiado grande. El máximo son 4 MB.' : errMsg(r);
+function polPick() { let i = document.getElementById('pol-file'); if (!i) { i = document.createElement('input'); i.type = 'file'; i.id = 'pol-file'; i.accept = 'application/pdf'; i.hidden = true; document.body.appendChild(i); } i.value = ''; i.click(); }
+function polFile(file) {
+  if (!(file.type === 'application/pdf' || /\.pdf$/i.test(file.name))) return toast('La póliza tiene que ser un PDF.');
+  if (file.size > POL_MAX) return toast('Ese PDF pesa ' + (file.size / 1048576).toFixed(1).replace('.', ',') + ' MB. El máximo son 4 MB.');
+  const fr = new FileReader();
+  fr.onerror = () => toast('No he podido leer ese PDF.');
+  fr.onload = async () => {
+    openSheet('Póliza', '<p class="note">Subiendo la póliza… Puede tardar unos segundos.</p>');
+    const r = await api('guardar_documento', { p_coche_id: S.carId, p_tipo: 'poliza', p_mime: 'application/pdf', p_datos: fr.result });
+    if (S.screen === 'pin') return;
+    if (!r.ok) return openSheet('Póliza', '<p class="note danger">' + esc(polErr(r)) + '</p><div class="actions"><button class="btn ghost" data-a="close">Cerrar</button></div>');
+    await reload(); closeSheet(); render(true); toast('Póliza guardada');
+  };
+  fr.readAsDataURL(file);
+}
+document.addEventListener('change', ev => { const t = ev.target; if (t.id === 'pol-file' && t.files && t.files[0]) { const f = t.files[0]; t.value = ''; polFile(f); } });
+async function polOpen() {
+  openSheet('Póliza', '<p class="note">Cargando la póliza…</p>');
+  const r = await api('obtener_documento', { p_coche_id: S.carId, p_tipo: 'poliza' });
+  if (S.screen === 'pin') return;
+  const more = '<div class="actions"><button class="btn ghost" data-a="pol-pick">Cambiar por otra</button><button class="btn ghost danger" data-a="pol-del">Quitar la póliza</button></div>';
+  if (!r.ok || !r.datos) return openSheet('Póliza', '<p class="note danger">' + (r.ok ? 'No hay póliza guardada.' : esc(polErr(r))) + '</p>' + more);
+  if (facUrl) URL.revokeObjectURL(facUrl);
+  const bin = atob(r.datos.split(',')[1] || ''); const u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  facUrl = URL.createObjectURL(new Blob([u8], { type: 'application/pdf' }));
+  openSheet('Póliza', '<a class="btn" href="' + facUrl + '" target="_blank" rel="noopener">' + ic('clip') + 'Abrir el PDF</a>' + more);
 }
 
 /* ===== Acciones ===== */
@@ -1250,6 +1570,20 @@ document.addEventListener('click', ev => {
     case 'ph-ok': fotoDone(); { const b = document.querySelector('[data-a="ph-pick"]'); if (b) b.textContent = 'Cambiar foto'; } break;
     case 'ph-cancel': fotoCloseCrop(); break;
     case 'import': importSheet(); break;
+    case 'imp-paste': pasteSheet(t.dataset.k); break;
+    case 'imp-review': impReview(); break;
+    case 'pol-pick': polPick(); break;
+    case 'pol-open': polOpen(); break;
+    case 'pol-del': document.querySelector('.sheet .actions').innerHTML = '<p class="danger" style="font-weight:600">¿Quitar la póliza guardada?</p><button class="btn bad" data-a="pol-del-yes">Sí, quitar</button><button class="btn ghost" data-a="close">Cancelar</button>'; break;
+    case 'pol-del-yes': {
+      t.disabled = true; t.textContent = 'Quitando…';
+      api('borrar_documento', { p_coche_id: S.carId, p_tipo: 'poliza' }).then(async r => {
+        if (S.screen === 'pin') return;
+        if (!r.ok) { t.disabled = false; t.textContent = 'Sí, quitar'; toast(polErr(r)); return; }
+        await reload(); closeSheet(); render(true); toast('Póliza quitada');
+      });
+      break;
+    }
     case 'copy': {
       const txt = PROMPTS[t.dataset.k][2]; const box = document.getElementById('pp-' + t.dataset.k);
       const fallback = () => { box.innerHTML = '<textarea readonly aria-label="Prompt para copiar">' + esc(txt) + '</textarea>'; const ta = box.querySelector('textarea'); ta.focus(); ta.select(); toast('Mantén pulsado el texto para copiarlo'); };
@@ -1271,6 +1605,7 @@ document.addEventListener('submit', ev => {
   if (f.id === 'f-car') saveCar(f);
   if (f.id === 'f-block') saveBlock(f);
   if (f.id === 'f-plan') savePlan(f);
+  if (f.id === 'f-imp') saveImport(f);
 });
 document.addEventListener('keydown', ev => { if (ev.key === 'Escape') closeSheet(); });
 
